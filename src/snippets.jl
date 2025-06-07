@@ -14,3 +14,17 @@ using Plots
 f(x) = exp(x)
 display(plot(f))
 savefig("images/plot.jl");
+
+using Org
+
+@doc org"""
+#+begin_src julia :results output
+test()
+#+end_src
+
+#+RESULTS:
+: hello world
+"""
+function test()
+    print("hello world")
+    end
