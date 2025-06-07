@@ -91,6 +91,9 @@ Aim of the regression is then, to minimize
 \end{align}
 * PDE System
 such that they satisfy the following system
+$$
+math
+$$
 \begin{align}
 \label{eq:pde}
 - \nabla  \left( a(x) \nabla u(x) \right) &= f(x) & \text{in} \quad \Omega \\
