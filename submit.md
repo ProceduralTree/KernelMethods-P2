@@ -73,12 +73,13 @@ correspondingly we are able to directly compute
 where $\nabla_x , \Delta_x$ are the partial gradients and laplacians with respect to the second argument of $k(x_j, \cdot )$.
 for a radial basis function $\phi (r) \in  C^2(\RR)$  and a corresponding RBF kernel $k(x,x') := \phi (\|x-x'\|)$ they can be computed trivially
 
+```math
 \begin{align}
 \label{eq:2}
 \nabla_x k(x',x) &= \phi'(\|x-x'\|)x\\
 \Delta_x k(x',x) &= \phi''(\|x-x'\|) + \phi'(\|x-x'\|) \left< x,x \right>\\
 \end{align}
-
+```
 Aim of the regression is then, to minimize
 
 \begin{align}
