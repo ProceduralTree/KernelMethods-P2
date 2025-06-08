@@ -13,17 +13,15 @@ using CUDA
     # devilish array access inside GPU Kernel.
     x = @inbounds SVector{3}(view(X , I[1] , :))
     x̂ = @inbounds SVector{3}(view(X , I[2] , :))
-    A[I] = x' * x̂
+    A[I] = exp(x' * x̂)
 
     end
 dev = cu
-n = 10
-A = zeros(Float32,10,10) |> cu
-X = rand(Float32 , n , 3) |> cu
+n = 10000
+A = zeros(Float32,n,n) |> dev
+X = rand(Float32 , n , 3) |> dev
 d = get_backend(X)
 
-assemble = assemble!(d, 64,(n,n))
 assemble2 = assemble2!(d, 64,(n,n))
-assemble(A,X , ndrange=size(A))
-assemble2(A,X , ndrange=size(A).-1)
+assemble2(A,X)
 A
