@@ -1,0 +1,1284 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2025-06-08 So 09:18 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kernel Collocation Excercise</title>
+<meta name="author" content="Jonathan Ulmer (3545737)" />
+<meta name="generator" content="Org Mode" />
+<style type='text/css'>
+<!--/*--><![CDATA[/*><!--*/
+/* nice-org-html.css
+;;==============================================================================
+;; Copyright (C) 2024, Ewan Townshend
+
+;; Author: Ewan Townshend
+;; URL: https://github.com/ewantown/nice-org-html
+;; Version: 1.2
+
+;;==============================================================================
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+;; This file is not part of emacs.
+
+;;==============================================================================
+*/
+
+/* basic layout ***************************************************************/
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+html {
+    font-family: Sans;
+    line-height: 1.3;
+    font-size: calc(15px + 0.390625vw);
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    background: #999; /* overwritten with theme --bg */
+    width: 100%;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family:
+	-apple-system,
+	BlinkMacSystemFont,
+	segoe ui,
+	Roboto,
+	Oxygen,
+	Ubuntu,
+	Cantarell,
+	open sans,
+	helvetica neue,
+	sans-serif,
+	system-ui
+}
+
+#preamble,
+#postamble {
+    width: 100%;
+}
+
+#content {
+    width: 80%;
+    max-width: 80ch;
+    margin-left: 1rem;
+    margin-right: 1rem;
+    flex: 1;
+}
+
+/* custom facing **************************************************************/
+/* The variable values are injected by CSS pre-processing in et-org-html.el */
+:root {
+    --bc-tb: #282a2e;
+    --bc-block: #c5c8c6;
+    --clr: #282a2e;
+    --clr-tb-hd: #282a2e;
+    --clr-code: #282a2e;
+    --bg: #ffffff;
+    --bg-code: #cecece;
+    --bg-tb-hd: #cecece;
+    --bg-block: #f3f3f3;
+    --clr-link: #969896;
+    --clr-title: #282a2e;
+    --clr-todo: #969896;
+    --bg-todo: initial;
+    --clr-done: #c5c8c6;
+    --bg-done: initial;
+    --ts-clr: #282a2e;
+    --mg: 20px;
+    --w-toc: 300px;
+    --bg-keyword: initial;
+    --clr-keyword: #282a2e;
+    --bg-constant: initial;
+    --clr-constant: #969896;
+    --bg-comment: initial;
+    --clr-comment: #c5c8c6;
+    --bg-comment-delimiter: initial;
+    --clr-comment-delimiter: initial;
+    --bg-function: initial;
+    --clr-function: #282a2e;
+    --bg-variable: initial;
+    --clr-variable: #969896;
+    --bg-preprocessor: initial;
+    --clr-preprocessor: #282a2e;
+    --bg-doc: initial;
+    --clr-doc: #c5c8c6;
+    --bg-builtin: initial;
+    --clr-builtin: #969896;
+    --bg-string: initial;
+    --clr-string: #969896;
+}
+
+body[data-mode='light'] {
+    background: var(--bg);
+    color: var(--clr);
+}
+
+body[data-mode='dark'] {
+    background: var(--bg);
+    color: var(--clr);
+    --bc-tb: #c5c8c6;
+    --bc-block: #717171;
+    --clr: #c5c8c6;
+    --clr-code: #ffffff;
+    --clr-tb-hd: #ffffff;
+    --bg: #1d1f21;
+    --bg-tb-hd: #0f1011;
+    --bg-code: #0f1011;
+    --bg-block: #292b2b;
+    --clr-link: #de935f;
+    --clr-title: #c5c8c6;
+    --clr-todo: #b5bd68;
+    --bg-todo: initial;
+    --clr-done: #5a5b5a;
+    --bg-done: initial;
+    --ts-clr: #b294bb;
+    --mg: 20px;
+    --w-toc: 300px;
+    --bg-keyword: initial;
+    --clr-keyword: #b294bb;
+    --bg-constant: initial;
+    --clr-constant: #de935f;
+    --bg-comment: initial;
+    --clr-comment: #5a5b5a;
+    --bg-comment-delimiter: initial;
+    --clr-comment-delimiter: initial;
+    --bg-function: initial;
+    --clr-function: #81a2be;
+    --bg-variable: initial;
+    --clr-variable: #cc6666;
+    --bg-preprocessor: initial;
+    --clr-preprocessor: #c5c8c6;
+    --bg-doc: initial;
+    --clr-doc: #717171;
+    --bg-builtin: initial;
+    --clr-builtin: #81a2be;
+    --bg-string: initial;
+    --clr-string: #b5bd68;
+}
+
+/* exceptions for badly rendering themes **************************************/
+body[data-theme='leuven'],
+body[data-theme='leuven-dark'] {
+    --bg-code: var(--bg-block);
+}
+
+/* ootb page layout ***********************************************************/
+#view-controls {
+    position: sticky;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: var(--bg);
+    color: var(--clr-code);
+    height: 2.5rem;
+    padding-top: 1.25rem;
+    padding-bottom: 1.25rem;
+    z-index: 100;
+    border-radius: 5px; /* Rounded corners */
+}
+#toggle-mode {
+    position: absolute;
+    right: 5%;
+    display: block;
+    text-align: center;
+    font-size: 1.5rem;
+    background: var(--bg);
+    color: var(--clr-code);
+    padding: 0.25rem 0;
+}
+#goto-top {
+    display: none;
+}
+#goto-top[data-show="true"] {
+    position: relative;
+    display: block;
+    text-align: center;
+    font-size: 1rem;
+    background: var(--bg);
+    color: var(--clr-code);
+    padding: 0.25rem 0;
+}
+#toggle-toc {
+    display: none;
+}
+#toggle-toc[data-show="true"] {
+    position: absolute;
+    left: 5%;
+    display: block;
+    text-align: center;
+    font-size: 1.5rem;
+    background: var(--bg);
+    color: var(--clr-code);
+    padding: 0.25rem 0;
+}
+
+#toggle-toc:hover,
+#goto-top:hover,
+#toggle-mode:hover {
+    cursor: pointer;
+}
+
+#table-of-contents {
+    display: none;
+}
+#table-of-contents[data-show="true"] {
+    width: 80%;
+    max-width: 80rem;
+    margin-left: 1rem;
+    margin-right: 1rem;
+    background: var(--bg);
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+#table-of-contents::-webkit-scrollbar {
+    display: none;
+}
+
+body[data-toc="true"] #content * {
+    display: none;
+}
+body[data-toc="true"] #content #table-of-contents,
+body[data-toc="true"] #content #table-of-contents * {
+    display: block;
+}
+
+
+/* misc elements **************************************************************/
+
+hr {
+    height: 0;
+    color: inherit;
+}
+
+b,
+strong {
+    font-weight: bolder;
+}
+
+code,
+kbd,
+samp,
+pre {
+    font-family:
+	Menlo,
+	ui-monospace,
+	SFMono-Regular,
+	Consolas,
+	'Liberation Mono',
+	monospace;
+}
+
+small {
+    font-size: 80%;
+}
+
+sub,
+sup {
+    font-size: 75%;
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline;
+}
+
+sub {
+    bottom: -0.25em;
+}
+
+sup {
+    top: -0.5em;
+}
+
+table {
+    text-indent: 0;
+    border-color: inherit;
+}
+
+summary {
+    display: list-item;
+}
+
+h1 {
+    color: var(--clr-title);
+    text-align: center;
+}
+h2 {
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+}
+
+code {
+    color: var(--clr-code);
+    background: var(--bg-code);
+    border-radius: 2px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+pre::-webkit-scrollbar {
+    display: none;
+}
+
+.todo {
+    color: var(--clr-todo);
+    background: var(--bg-todo);
+}
+
+.done {
+    color: var(--clr-done);
+    background: var(--bg-done);
+}
+
+.timestamp-wrapper {
+    font-size: 0.8rem;
+    color: var(--clr-ts);
+}
+
+table {
+    width: 100%;
+    border: 2px solid var(--bc-tb);
+}
+
+thead {
+    color: var(--clr-tb-hd);
+    background: var(--bg-tb-hd);
+}
+
+td, th {
+    border: thin solid var(--bc-tb);
+}
+
+li {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+#text-table-of-contents li a:before {
+    content: "• "
+}
+
+a {
+    text-decoration: none;
+    color: var(--clr-link);
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.MathJax_Display {
+    font-size: 1.25em;
+}
+
+img {
+    max-width: 100%;
+}
+
+pre {
+    padding: 1rem;
+    border: 1px solid var(--bc-block);
+    border-radius: 0.5rem;
+    background: var(--bg-block);
+    font-size: 0.9rem;
+    overflow-x: auto;
+    -ms-overflow-style: none;
+    scrollbar-width: thin;
+}
+
+.org-src-wrapper {
+    position: relative;
+    border: 1px solid var(--bc-block);
+    border-radius: 0.5rem;
+    background: var(--bg-code);
+}
+
+.org-src-bar {
+    position: relative;
+    top: 0rem;
+    width: 100%;
+    background: var(--bg-code);
+    border-radius: 0.5rem;
+    text-align: right;
+    min-height: 1rem;
+}
+
+.org-src-wrapper .org-src-container {
+    position: relative;
+    border: none;
+    border-radius: 0.5rem;
+    background: var(--bg-code);
+    z-index: 0;
+}
+
+.org-src-wrapper .org-src-container pre.src {
+    border: none !important;
+    background: var(--bg-code) !important;
+    padding-top: 0rem;
+    padding-bottom: 0rem;
+    margin-top: 0rem;
+    margin-bottom: 0rem;
+    padding-bottom: 1.6rem;
+}
+
+.org-src-wrapper .org-src-bar .srcLangLabel {
+    top: 0rem;
+    right: 1.6rem;
+    background-color: transparent;
+    color: var(--clr-doc);
+    border: none;
+    padding: 0.5rem;
+    padding-bottom: 0.3rem;
+    text-align: center;
+    text-decoration: none;
+    font-size: 0.8rem;
+    opacity: 0.5;
+    z-index: 1;
+    display: none;
+}
+
+.org-src-wrapper .org-src-bar .copyBtn {
+    top: 0rem;
+    right: 0.1rem;
+    background-color: transparent;
+    color: var(--clr-doc);
+    border: none;
+    padding: 0.5rem;
+    padding-right: 0.7rem;
+    padding-bottom: 0.3rem;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 0.8rem;
+    cursor: pointer;
+    opacity: 0.5;
+    z-index: 1;
+    transition: opacity 0.3s;
+}
+
+.org-src-wrapper .copyBtn:hover {
+    opacity: 1;
+}
+
+.org-src-wrapper .copyBtn i {
+    margin-right: 0.5rem;
+    padding: 0.5rem;
+}
+
+/* responsive layouts *********************************************************/
+
+@media only screen and (max-width: 768px) {
+    #toggle-toc[data-show='true'] {
+	padding-right: 5%;
+    }
+    #toggle-mode {
+	padding-left: 5%;
+    }
+    #content {
+	width: 90%;
+    }
+}
+
+@media only screen and (max-width: 480px) {
+    #view-controls {
+	padding-top: 1.5em;
+	padding-bottom: 1.5em;
+    }
+    #toggle-toc[data-show='true'] {
+	padding-right: 5%;
+    }
+    #toggle-mode {
+	padding-left: 5%;
+    }
+    #content {
+	width: 90%;
+    }
+}
+
+
+/* generated header and footer ************************************************/
+
+#generated-header,
+#generated-footer {
+    width: 90%;
+    margin-left: 5%;
+    margin-right: 5%;
+    line-height: 1;
+}
+.generated header {
+    top: 0;
+    left: 0;
+}
+.generated footer {
+    bottom: 0;
+    left: 0;
+}
+.generated header a,
+.generated footer a {
+    display: inline;
+    color: var(--clr-title);
+    text-decoration: none;
+    transition: color .15s ease-in;
+}
+.generated header a:hover,
+.generated footer a:hover {
+    color: var(--clr-link);
+}
+
+.generated header nav {
+    position: relative;
+    margin-top: 1rem;
+    top: 0;
+    left: 0;
+}
+.generated footer nav {
+    position: relative;
+    bottom: 0;
+    left: 0;
+}
+
+.generated .separator {
+    display: block;
+    width: 111%;
+    margin-left: -5.5%;
+    max-width: 100vw;
+    height: 0.125rem;
+    background: var(--bg-code);
+}
+
+.generated a .nav-title,
+.generated a .nav-author {
+    display: inline;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    padding-right: 10rem;
+}
+
+.generated .nav-title {
+    letter-spacing: .075rem;
+    font-weight: 500;
+}
+
+.generated .nav-toggle {
+    display: none;
+}
+.generated .nav-button {
+    display: none;
+}
+.generated .nav-list {
+    overflow-y: hidden;
+    display: block;
+    float: right;
+    list-style: none;
+    margin-bottom: 0;
+    margin-top: 0;
+}
+
+.generated .nav-item {
+    position: relative;
+    float: left;
+    margin: 0;
+}
+.generated .nav-link {
+    position: relative;
+    float: right;
+    margin-left: 2rem;
+    margin-right: 0rem;
+}
+
+.generated .nav-toggle {
+    max-height: 0;
+    visibility: hidden;
+    overflow-y: hidden;
+}
+
+.generated header .separator {
+    margin-top: 1rem;
+    margin-bottom: 0;
+}
+
+.generated footer .separator {
+    margin-bottom: 1rem;
+    margin-top: 0;
+}
+
+.generated .menu-sep {
+    display: none;
+    max-height: 0;
+    overflow-y: hidden;
+    transition: max-height 0.2s ease;
+}
+
+.generated footer {
+    padding-bottom: 1rem;
+}
+
+.generated.compact footer {
+    padding-bottom: 0;
+}
+
+.generated.compact header .separator {
+    margin-top: 0;
+    margin-bottom:0;
+}
+.generated.compact footer .separator {
+    margin-bottom: 1rem;
+}
+
+.generated.compact .nav-toggle {
+    visibility: visible;
+}
+
+.generated.compact .nav-toggle + label span::before {
+    transition: all 0.2s ease-in;
+}
+.generated.compact .nav-toggle:checked + label span::before {
+    transform: translateX(0.04rem) translateY(-0.25rem) rotate(90deg);
+    transition: all 0.2s ease;
+}
+
+.generated.compact .menu-sep {
+    display: flex;
+    max-height: 0rem;
+}
+.generated.compact .nav-toggle:checked + label + .menu-sep {
+    display: block;
+    position: relative;
+    max-height: 1rem;
+    transition: max-height 0.2s ease;
+}
+
+.generated.compact .nav-list {
+    float: none !important;
+    position: relative;
+    display: block;
+    padding-left: 0;
+    padding-right: 0;
+    z-index: 5;
+    width: 100%;
+    height: auto;
+    max-height: 0;
+    margin: 0;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    transition: max-height 0.2s ease;
+}
+.generated.compact .nav-toggle:checked + label ~ .nav-list {
+    display: block;
+    max-height: 100rem;
+    overflow-y: hidden;
+}
+.generated.compact header .nav-toggle:checked + label ~ .nav-list {
+    transition: max-height 0.2s ease;
+}
+
+.generated.compact .nav-button {
+    display: inline;
+    position: relative;
+    float: right;
+    font-size: 1rem;
+}
+.generated.compact .nav-button span::before {
+    display: inline-block;
+    content: '\2807';
+    font-size: 2rem;
+    transform: translateX(0.25rem) translateY(-0.5rem);
+}
+
+.generated.compact .nav-item {
+    float: none !important;
+    text-align: center !important;
+}
+.generated.compact .nav-link {
+    line-height: 2rem;
+    margin-left: 2rem;
+    margin-right: 2rem;
+    float: none !important;
+}
+
+.generated.compact footer .separator.menu-sep {
+    margin-bottom: -1rem;
+}
+
+.hidden {
+    display: none;
+}
+
+.collapsible:hover {
+    cursor: pointer;
+}
+
+.collapsible.collapsed::after {
+    display: inline-block;
+    content: '...';
+}
+/*]]>*/-->
+</style>
+<script>
+  window.MathJax = {
+    tex: {
+      ams: {
+        multlineWidth: '85%'
+      },
+      tags: 'ams',
+      tagSide: 'right',
+      tagIndent: '.8em'
+    },
+    chtml: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    svg: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    output: {
+      font: 'mathjax-modern',
+      displayOverflow: 'overflow'
+    }
+  };
+</script>
+
+<script
+  id="MathJax-script"
+  async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+</head>
+<body>
+<div id="preamble" class="status">
+<div id='view-controls'><div id='toggle-mode' title='Mode'>&#9788;</div><div id='goto-top' title='Top'>&#8963;</div><div id='toggle-toc' title='Contents'>&#9776;</div></div>
+</div>
+<div id="content" class="content">
+<h1 class="title">Kernel Collocation Excercise</h1>
+<div id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#org4d734fa">1. Preamble</a></li>
+<li><a href="#orgcc47829">2. Regression Approach</a></li>
+<li><a href="#orgc240f0c">3. PDE System</a>
+<ul>
+<li><a href="#orga255a00">3.1. Optimization Problem</a></li>
+</ul>
+</li>
+<li><a href="#orga019d40">4. Linear Sytem</a></li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org4d734fa" class="outline-2">
+<h2 id="org4d734fa"><span class="section-number-2">1.</span> Preamble</h2>
+<div class="outline-text-2" id="text-1">
+<div class='org-src-wrapper'>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_04e85ebcb3a4438eb03494993eaf5e46>&#10697;</button>
+<script type='text/javascript'>
+var copyBtnbtn_04e85ebcb3a4438eb03494993eaf5e46=document.querySelector('button[name=btn_04e85ebcb3a4438eb03494993eaf5e46]');
+copyBtnbtn_04e85ebcb3a4438eb03494993eaf5e46.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`module PDESystem\n\nend\n`);copyBtnbtn_04e85ebcb3a4438eb03494993eaf5e46.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_04e85ebcb3a4438eb03494993eaf5e46.innerHTML = '&#10697;'}, 3000);
+});
+</script>
+</div><div class="org-src-container">
+<pre class="src src-julia"><span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">module</span> PDESystem
+
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
+</pre>
+</div></div>
+
+<div class='org-src-wrapper'>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_eedae0a7b802419abeadd2262ed28adb>&#10697;</button>
+<script type='text/javascript'>
+var copyBtnbtn_eedae0a7b802419abeadd2262ed28adb=document.querySelector('button[name=btn_eedae0a7b802419abeadd2262ed28adb]');
+copyBtnbtn_eedae0a7b802419abeadd2262ed28adb.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`test()\n`);copyBtnbtn_eedae0a7b802419abeadd2262ed28adb.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_eedae0a7b802419abeadd2262ed28adb.innerHTML = '&#10697;'}, 3000);
+});
+</script>
+</div><div class="org-src-container">
+<pre class="src src-julia">test()
+</pre>
+</div></div>
+
+<pre class="example">
+hello world
+</pre>
+
+
+<div class='org-src-wrapper'>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_85f1341a270f4e14a72d6a031b5da2f9>&#10697;</button>
+<script type='text/javascript'>
+var copyBtnbtn_85f1341a270f4e14a72d6a031b5da2f9=document.querySelector('button[name=btn_85f1341a270f4e14a72d6a031b5da2f9]');
+copyBtnbtn_85f1341a270f4e14a72d6a031b5da2f9.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`\nusing Plots\nf(x) = exp(x) + 10 * sin(x)\nplot(f)\nsavefig(\"images/plot.png\")\n`);copyBtnbtn_85f1341a270f4e14a72d6a031b5da2f9.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_85f1341a270f4e14a72d6a031b5da2f9.innerHTML = '&#10697;'}, 3000);
+});
+</script>
+</div><div class="org-src-container">
+<pre class="src src-julia">
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> Plots
+<span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">f</span>(x) = exp(x) <span style="color: #f0c674;">+</span> <span style="color: #de935f; font-weight: bold;">10</span> <span style="color: #f0c674;">*</span> sin(x)
+plot(f)
+savefig(<span style="color: var(--clr-string); background-color: var(--bg-string);">"images/plot.png"</span>)
+</pre>
+</div></div>
+
+
+<div id="org0cf6144" class="figure">
+<p><img src="images/plot.png" alt="plot.png" />
+</p>
+</div>
+<div class='org-src-wrapper'>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_b572dbb9d6cc4fdcb5708826b95559cf>&#10697;</button>
+<script type='text/javascript'>
+var copyBtnbtn_b572dbb9d6cc4fdcb5708826b95559cf=document.querySelector('button[name=btn_b572dbb9d6cc4fdcb5708826b95559cf]');
+copyBtnbtn_b572dbb9d6cc4fdcb5708826b95559cf.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`using KernelAbstractions\n\n@kernel function Δ_kernel(A , Δ)\n    I = @index(Global , Cartesian)\n    Ix = oneunit(I)\n    Δ[I] = 0\n    dimensions = ndims(A)\n    for i in 1:dimensions\n        zero(I)\n        In = CartesianIndex()\n        Δ[I] += A[I + In] - A[I]\n    end\nend\n`);copyBtnbtn_b572dbb9d6cc4fdcb5708826b95559cf.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_b572dbb9d6cc4fdcb5708826b95559cf.innerHTML = '&#10697;'}, 3000);
+});
+</script>
+</div><div class="org-src-container">
+<pre class="src src-julia"><span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> KernelAbstractions
+
+<span style="color: #c5c8c6; font-weight: bold;">@kernel</span> <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> &#916;_kernel(A , &#916;)
+<span style="color: #372338b83972;"> </span>   I = <span style="color: #c5c8c6; font-weight: bold;">@index</span>(Global , Cartesian)
+<span style="color: #372338b83972;"> </span>   Ix = oneunit(I)
+<span style="color: #372338b83972;"> </span>   &#916;[I] = <span style="color: #de935f; font-weight: bold;">0</span>
+<span style="color: #372338b83972;"> </span>   dimensions = ndims(A)
+<span style="color: #372338b83972;"> </span>   <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">for</span> i <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">in</span> <span style="color: #de935f; font-weight: bold;">1</span>:dimensions
+<span style="color: #372338b83972;"> </span>   <span style="color: #372338b83972;"> </span>   zero(I)
+<span style="color: #372338b83972;"> </span>   <span style="color: #372338b83972;"> </span>   In = CartesianIndex()
+<span style="color: #372338b83972;"> </span>   <span style="color: #372338b83972;"> </span>   &#916;[I] <span style="color: #f0c674;">+=</span> A[I <span style="color: #f0c674;">+</span> In] <span style="color: #f0c674;">-</span> A[I]
+<span style="color: #372338b83972;"> </span>   <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
+</pre>
+</div></div>
+
+<pre class="example">
+Δ_kernel (generic function with 4 methods)
+</pre>
+
+
+
+<div class='org-src-wrapper'>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_fbb0c784eb4a49e4a651f851a5869cc7>&#10697;</button>
+<script type='text/javascript'>
+var copyBtnbtn_fbb0c784eb4a49e4a651f851a5869cc7=document.querySelector('button[name=btn_fbb0c784eb4a49e4a651f851a5869cc7]');
+copyBtnbtn_fbb0c784eb4a49e4a651f851a5869cc7.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`dt = 0.1\nfor t in 0:0.1:10\nx += dx * dt\nend\n`);copyBtnbtn_fbb0c784eb4a49e4a651f851a5869cc7.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_fbb0c784eb4a49e4a651f851a5869cc7.innerHTML = '&#10697;'}, 3000);
+});
+</script>
+</div><div class="org-src-container">
+<pre class="src src-julia">dt = <span style="color: #de935f; font-weight: bold;">0.1</span>
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">for</span> t <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">in</span> <span style="color: #de935f; font-weight: bold;">0</span>:<span style="color: #de935f; font-weight: bold;">0.1</span>:<span style="color: #de935f; font-weight: bold;">10</span>
+x <span style="color: #f0c674;">+=</span> dx <span style="color: #f0c674;">*</span> dt
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
+</pre>
+</div></div>
+</div>
+</div>
+<div id="outline-container-orgcc47829" class="outline-2">
+<h2 id="orgcc47829"><span class="section-number-2">2.</span> Regression Approach</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+given \( \hat{X}:=\left\{ x_j \right\}_{j=1}^n \subset\RR ^d\) we aim
+</p>
+
+\begin{align}
+\label{eq:approx}
+u_h(x) &= \sum_{j=1}^{n} a_j k(x_j,x)
+\end{align}
+<p>
+correspondingly we are able to directly compute
+</p>
+
+\begin{align*}
+\nabla_x u(x) &= \sum_{j=1}^n a_j \nabla_x  k(x_j ,x) \\
+- \nabla_x \cdot \left( a(x) \nabla_x u(x) \right) &= - \left< \nabla_x a(x) , \nabla_x u(x) \right> - a(x) \Delta_x u(x) \\
+&=  - \sum_{j=1}^{n} a_j \left( \left< \nabla_x a(x) , \nabla_x k(x_j,x)  \right> - a(x) \Delta_x k(x_j,x)\right)
+\end{align*}
+<p>
+where \(\nabla_x , \Delta_x\) are the partial gradients and laplacians with respect to the second argument of \(k(x_j, \cdot )\).
+for a radial basis function \(\phi (r) \in  C^2(\RR)\)  and a corresponding RBF kernel \(k(x,x') := \phi (\|x-x'\|)\) they can be computed trivially
+</p>
+\begin{align}
+\label{eq:2}
+\nabla_x k(x',x) &= \phi'(\|x-x'\|)x\\
+\Delta_x k(x',x) &= \phi''(\|x-x'\|) + \phi'(\|x-x'\|) \left< x,x \right>\\
+\end{align}
+<p>
+Aim of the regression is then, to minimize
+</p>
+\begin{align}
+\label{eq:3}
+\mathcal{J}(\vec{a} ; \hat{X})
+\end{align}
+</div>
+</div>
+<div id="outline-container-orgc240f0c" class="outline-2">
+<h2 id="orgc240f0c"><span class="section-number-2">3.</span> PDE System</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+such that they satisfy the following system
+</p>
+\begin{align}
+\label{eq:pde}
+- \nabla  \left( a(x) \nabla u(x) \right) &= f(x) & \text{in} \quad \Omega \\
+u(x) &= g_D(x) & \text{on} \quad  \Gamma_D \\
+\left( a(x) \nabla u(x)  \right) \cdot  \vec{n}(x) &= g_N & \text{on} \quad \Gamma_N
+\end{align}
+</div>
+<div id="outline-container-orga255a00" class="outline-3">
+<h3 id="orga255a00"><span class="section-number-3">3.1.</span> Optimization Problem</h3>
+<div class="outline-text-3" id="text-3-1">
+<p>
+If the solution to the PDE system \eqref{eq:pde} exists, then finding the solution is equivalent to minimizing the following functional:
+</p>
+\begin{align}
+\label{eq:4}
+\mathcal{J}(u) &= \int_{\Omega}
+\end{align}
+</div>
+</div>
+</div>
+<div id="outline-container-orga019d40" class="outline-2">
+<h2 id="orga019d40"><span class="section-number-2">4.</span> Linear Sytem</h2>
+<div class="outline-text-2" id="text-4">
+<div class='org-src-wrapper'>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_04e0e471fef2440d9cbdb74160776294>&#10697;</button>
+<script type='text/javascript'>
+var copyBtnbtn_04e0e471fef2440d9cbdb74160776294=document.querySelector('button[name=btn_04e0e471fef2440d9cbdb74160776294]');
+copyBtnbtn_04e0e471fef2440d9cbdb74160776294.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`using KernelAbstractions\n@kernel function assemble_matrix()\n\n    end\n`);copyBtnbtn_04e0e471fef2440d9cbdb74160776294.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_04e0e471fef2440d9cbdb74160776294.innerHTML = '&#10697;'}, 3000);
+});
+</script>
+</div><div class="org-src-container">
+<pre class="src src-julia"><span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> KernelAbstractions
+<span style="color: #c5c8c6; font-weight: bold;">@kernel</span> <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> assemble_matrix()
+ 
+<span style="color: #372338b83972;"> </span>   <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
+</pre>
+</div></div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+if (!document.cookie.split('; ').find(r => r.startsWith('mode'))) {
+document.cookie = 'mode=dark'
+}
+document.cookie = 'light=doom-plain'
+document.cookie = 'dark=doom-tomorrow-night'
+/*
+;; nice-org-html.js
+;;==============================================================================
+;; Copyright (C) 2024, Ewan Townshend
+
+;; Author: Ewan Townshend
+;; URL: https://github.com/ewantown/nice-org-html
+;; Version: 1.2
+
+;;==============================================================================
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+;; This file is not part of emacs.
+
+;;==============================================================================
+;; JS for html exported by et-org-html.el
+ */
+
+const preamble = document.getElementById("preamble");
+const content = document.getElementById("content");
+const postamble = document.getElementById("postamble");
+
+const controls = document.getElementById("view-controls");
+const toggleTocBtn = document.getElementById("toggle-toc");
+const gotoTopBtn = document.getElementById("goto-top");
+const toggleModeBtn = document.getElementById("toggle-mode");
+const toc = document.getElementById("table-of-contents");
+
+// Get and parse options passed in cookie string
+const optCookie = document.cookie.split('; ').find(r => r.startsWith('options'));
+const options = {};
+if (optCookie) {
+  optCookie.split('=')[1].split('__').forEach(pair => {
+    const [key, val] = pair.split(':');
+    if (key && val) {
+      options[key] = val;
+    }
+  })
+}
+
+// Move sticky control bar (injected within preamble)
+document.body.insertBefore(controls, content);
+
+// Mode handling
+function getMode() {
+  let cookie = document.cookie.split('; ').find(r => r.startsWith('mode'))
+  return cookie && cookie.split("=")[1];
+}
+
+function setMode(mode) {
+  document.body.dataset.mode = mode;
+  let thmCookie = document.cookie.split('; ').find(r => r.startsWith(mode));
+  document.body.dataset.theme = thmCookie ? thmCookie.split('=')[1] : 'unknown';
+  toggleModeBtn.innerHTML = (mode === 'light') ? '&#9789;' : '&#9788;';
+  document.cookie = 'mode=' + mode;
+}
+
+// Initially, set mode based on stored cookie
+let mode = getMode();
+if (mode && ["light", "dark"].includes(mode)) {
+  setMode(mode);
+} else {  
+  let prop = "prefers-color-scheme";
+  let pref = (mode === "query") && window.matchMedia &&
+    ["light", "dark"].find(s => window.matchMedia(`(${prop}: ${s})`).matches);
+  setMode(pref || "dark"); // fallback: dark
+}
+
+// Mode toggling
+toggleModeBtn.addEventListener('click', () => {
+  setMode(document.body.dataset.mode === 'dark' ? 'light' : 'dark');
+})
+
+
+// Jump to top
+let scrollY = document.documentElement.scrollTop;
+window.addEventListener('scroll', () => {
+  let atTop = document.documentElement.scrollTop <= preamble.offsetHeight;
+  gotoTopBtn.dataset.show = !atTop + "";
+});
+gotoTopBtn.addEventListener('click', () => {
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+})
+
+// Table-of-contents toggling
+if (toc) {
+  toggleTocBtn.dataset.show = 'true';
+  toggleTocBtn.addEventListener('click', () => {
+    let showingToc = document.body.dataset.toc;
+    scrollY = showingToc ? scrollY : document.documentElement.scrollTop;
+    if (showingToc) {
+      document.body.dataset.toc = '';
+      document.documentElement.scrollTop = scrollY;
+    } else {
+      let tocHeight =
+	Math.max(
+	  window.innerHeight - controls.offsetHeight,
+	  toc.offsetHeight
+	);
+      const header = document.getElementById("injected-header");
+      if (header && (scrollY > header.offsetHeight)) {
+	document.documentElement.scrollTop = preamble.offsetHeight;
+      }
+      toc.style.height = `${tocHeight}px`;
+      document.body.dataset.toc = 'true';
+    }
+    toc.addEventListener('click', () => {
+      if (document.body.dataset.toc) {
+	document.body.dataset.toc = '';
+	document.documentElement.scrollTop = scrollY;
+      }
+    })
+  })
+};
+
+// Instrument anchor linking for sticky control bar
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+  anchor.addEventListener('click', (e) => {
+    e.preventDefault();
+    const targetId = e.currentTarget.getAttribute('href');
+    const target = document.querySelector(targetId);
+
+    setTimeout(() => {
+      const targetPos = target.getBoundingClientRect().top;
+      let offset = targetPos + document.documentElement.scrollTop;
+      offset -= controls.offsetHeight;
+      window.scrollTo({
+	top: offset,
+	behavior: "smooth"
+      });
+    }, 0);
+  });
+});
+
+function copyTextToClipboard(text) {
+  // Make invisible textarea
+  var textArea = document.createElement("textarea");
+  textArea.style.position = 'fixed';
+  textArea.style.top = 0;
+  textArea.style.left = 0;
+  textArea.style.width = '2em';
+  textArea.style.height = '2em';
+  textArea.style.padding = 0;
+  textArea.style.border = 'none';
+  textArea.style.outline = 'none';
+  textArea.style.boxShadow = 'none';
+  textArea.style.background = 'transparent';
+
+  // Copy contents into it
+  textArea.value = text;
+
+  // Try to copy from it to clipboard
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+  var res;
+  try {
+    res = document.execCommand('copy');
+  } catch (err) {
+    res = false;
+  }
+
+  // Remove invisible textarea
+  document.body.removeChild(textArea);
+
+  return res;
+}
+
+// Handle the default header / footer drawers
+const header = document.getElementById("generated-header");
+const footer = document.getElementById("generated-footer");
+
+if (header) {
+  let toggle = header.querySelector("header nav input.nav-toggle");
+  if (toggle) { toggle.checked = false; }
+}
+if (footer) {
+  let nav = footer.querySelector("nav");
+  let toggle = nav && nav.querySelector(".nav-toggle");
+  let navList = nav && nav.querySelector(".nav-list");
+  let navElem = navList && [...navList.querySelectorAll(".nav-item")];
+  let numLink = navElem && navElem.length;
+  if (numLink) {
+    toggle.checked = false;
+    toggle.addEventListener('change', () => {
+      if (toggle.checked) {
+	setTimeout(() => window.scrollTo({
+	  behavior: 'smooth',
+	  top: document.body.scrollHeight	  
+	}), 88);
+      }
+   });
+  }
+}
+
+function autoCompact() {
+  var anchor, links, overlap, trivial;
+  const domCompute = (node) => {
+    if (node) {
+      anchor = node.querySelector('.nav-title, .nav-author');
+      links = node.querySelector('.nav-list');
+      overlap = links.offsetLeft - 5 <= anchor.offsetLeft + anchor.offsetWidth;	
+      trivial = links.offsetLeft === anchor.offsetLeft;
+    }
+  };
+  let mediaMatch = window.matchMedia('(max-width: 768px)').matches;
+  [header, footer].forEach(e => {
+    if (e) {
+      if (mediaMatch) {
+	e.classList.add('compact');
+      } else {
+	domCompute(e);
+	if (overlap && !trivial) {
+	  e.classList.add('compact');
+	} else {	
+	  let clone = e.cloneNode(true);
+	  clone.style.top = '-2000px';
+	  clone.style.maxHeight = '0px';
+	  clone.classList.remove('compact');
+	  e.parentNode.insertBefore(clone, e);
+	  domCompute(clone);
+	  let toggle = e.querySelector('.nav-toggle');
+	  if (!overlap && toggle && !toggle.checked) {
+	    e.classList.remove('compact');
+	  }
+	  e.parentNode.removeChild(clone);
+	}
+      }
+    }
+  })
+}
+
+if ((header || footer)) {
+  if (options.hasOwnProperty('layout')) {
+    [header, footer].forEach(e => e ? e.classList.add(options.layout) : null);
+  } else {
+    autoCompact();
+    window.addEventListener('resize', autoCompact);
+  }
+}
+
+if (options.hasOwnProperty('src-lang') && options['src-lang'] == 't') {
+  let labels = [...document.querySelectorAll('.srcLangLabel')];
+  labels.forEach(l => l.style.display = 'inline-block');
+}
+
+if (options.hasOwnProperty('collapsing') && options.collapsing == 't') {
+  let levels = [2, 3, 4, 5, 6];
+  let containerPrefix = 'outline-container-';
+  levels.forEach(l => {
+    let containers = [...document.querySelectorAll(`.outline-${l}`)];
+    containers.forEach(c => {
+      let id = c.id.slice(containerPrefix.length);
+      let headline = document.getElementById(id);
+      let siblings = [...c.children].filter(child => child.id != id);
+      headline.classList.add('collapsible');
+      headline.addEventListener('click', () => {	
+	if (headline.classList.contains('collapsed')) {
+	  headline.classList.remove('collapsed');
+	  siblings.forEach(child => {
+	    child.classList.remove('hidden');
+	  });	  
+	} else {
+	  headline.classList.add('collapsed');
+	  siblings.forEach(child => {
+	    child.classList.add('hidden');
+	  });
+	}
+      })
+    })
+  })
+}
+/*]]>*/-->
+</script><div hidden>Generated by: https://github.com/ewantown/nice-org-html</div>
+</div>
+</body>
+</html>
