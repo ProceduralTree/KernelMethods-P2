@@ -11,74 +11,83 @@
 #+latex_header: \setmonofont{DejaVu Sans Mono}[Scale=0.8]
 #+Property: header-args:julia :eval never-export :async t :session *julia* :exports both :tangle src/snippets.jl :comments org
 
-* Preamble
-#+NAME: round-tbl
-#+BEGIN_SRC emacs-lisp :var tbl="" fmt="%.3f"
-  (mapcar (lambda (row)
-            (mapcar (lambda (cell)
-                      (if (numberp cell)
-                          (format fmt cell)
-                        cell))
-                    row))
-          tbl)
-#+end_src
+#+begin_export html
+<div style="display:none">
+\(
+\newcommand{\RR}{\mathbb{R}}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\newtheorem{remark}{Remark}
+\)
+</div>
+#+end_export
 
-#+RESULTS: round-tbl
-
-#+RESULTS:
-
-#+begin_src julia :tangle src/kernel.jl
-module PDESystem
-
-end
-#+end_src
-
-#+RESULTS:
-
-#+begin_src julia :results output
-test()
-#+end_src
-
-#+RESULTS:
-: hello world
-
-#+begin_src julia :results file graphics :file "images/plot.png"
-
-using Plots
-f(x) = exp(x) + 10 * sin(x)
-plot(f)
-savefig("images/plot.png")
-#+end_src
-
-#+RESULTS:
-[[file:images/plot.png]]
+* Distance Matrix Comutation
 #+begin_src julia
 using KernelAbstractions
-
-@kernel function Δ_kernel(A , Δ)
-    I = @index(Global , Cartesian)
-    Ix = oneunit(I)
-    Δ[I] = 0
-    dimensions = ndims(A)
-    for i in 1:dimensions
-        zero(I)
-        In = CartesianIndex()
-        Δ[I] += A[I + In] - A[I]
+using StaticArrays
+using Distributed
+@kernel function distance_matrix!(A ,@Const(X_1) , @Const(X_2))
+    # boilerplate
+    Iᵢⱼ = @index(Global , Cartesian)
+    @inbounds xᵢ= SVector{3}(view(X_1 , : , Iᵢⱼ[1]))
+    @inbounds xⱼ= SVector{3}(view(X_2 , : , Iᵢⱼ[2]))
+    # element computation
+    @inbounds d = xᵢ - xⱼ
+    @inbounds A[Iᵢⱼ] = d' * d
     end
+
+
+
+function distM(X₁ ,X₂)
+    A = zeros(size(X₁,2) , size(X₂,2))
+    dist_kernel! = distance_matrix!(get_backend(A) , 8 , size(A))
+    dist_kernel!(A ,X₁ , X₂ )
+    KernelAbstractions.synchronize(get_backend(A))
+    return A
+end
+
+function distK(X_1 , X_2)
+norm_1 = sum(X_1.^2 ; dims=1)
+norm_2 = sum(X_2.^2 ; dims=1)
+distM = -2*(X_1'*X_2) .+ norm_1' .+ norm_2
 end
 #+end_src
 
 #+RESULTS:
-: Δ_kernel (generic function with 4 methods)
+: distK (generic function with 1 method)
+
+#+begin_src julia :exports code :results none
+X_1 = rand(3,10_000)
+X_2 = rand(3,10_000)
+#+end_src
 
 
 #+begin_src julia
-dt = 0.1
-for t in 0:0.1:10
-x += dx * dt
-end
+using BenchmarkTools
+@benchmark distK(X_1 , X_2)
 #+end_src
 
+#+RESULTS:
+: julia-async:3fc69a5d-7ca7-4e92-b610-9868f288df17
+
+#+begin_src julia
+@benchmark distM(X_1, X_2)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+BenchmarkTools.Trial: 12 samples with 1 evaluation per sample.
+ Range (min … max):  427.735 ms … 507.689 ms  ┊ GC (min … max): 0.08% … 18.99%
+ Time  (median):     443.176 ms               ┊ GC (median):    3.41%
+ Time  (mean ± σ):   446.953 ms ±  20.491 ms  ┊ GC (mean ± σ):  4.63% ±  4.89%
+
+  ▁ ▁ ▁    ▁▁█  ▁█  ▁                                         ▁
+  █▁█▁█▁▁▁▁███▁▁██▁▁█▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁█ ▁
+  428 ms           Histogram: frequency by time          508 ms <
+
+ Memory estimate: 762.94 MiB, allocs estimate: 14.
+#+end_example
 
 * Regression Approach
 given \( \hat{X}:=\left\{ x_j \right\}_{j=1}^n \subset\RR ^d\) we aim
@@ -96,12 +105,13 @@ correspondingly we are able to directly compute
 &=  - \sum_{j=1}^{n} a_j \left( \left< \nabla_x a(x) , \nabla_x k(x_j,x)  \right> - a(x) \Delta_x k(x_j,x)\right)
 \end{align*}
 where \(\nabla_x , \Delta_x\) are the partial gradients and laplacians with respect to the second argument of \(k(x_j, \cdot )\).
-for a radial basis function \(\phi (r) \in  C^2(\RR)\)  and a corresponding RBF kernel \(k(x,x') := \phi (\|x-x'\|)\) they can be computed trivially
+for a radial basis function \(\phi (r^2) \in  C^2(\RR)\)  and a corresponding RBF kernel \(k(x,x') := \phi (\|x-x'\|^2)\) they can be computed trivially
 \begin{align}
 \label{eq:2}
-\nabla_x k(x',x) &= \phi'(\|x-x'\|)x\\
-\Delta_x k(x',x) &= \phi''(\|x-x'\|) + \phi'(\|x-x'\|) \left< x,x \right>\\
+\nabla_x k(x',x) &= 2*(x - x')*\phi'(\|x-x'\|^2)\\
+\Delta_x k(x',x) &= 2*d*\phi'(\|x-x'\|^2) + 4*\phi''(\|x-x'\|^2) \left\|x-x'\right\|^2\\
 \end{align}
+where \(d\) is the dimenstion of \(x\)
 ** Kernel Implementation Implementation
 #+begin_src julia
 function rbf_gaussian(r, ::Val{γ}) where γ
@@ -114,13 +124,14 @@ function rbf_gaussian′′(r , ::Val{γ}) where γ
     γ^2 * exp(- γ * r)
     end
 function k_gauss(x , x̂)
-    rbf_gaussian(norm(x-x̂) , Val(0.1))
+    rbf_gaussian(norm(x-x̂)^2 , Val(1.))
     end
 function ∇k_gauss(x,x̂)
-    rbf_gaussian′(norm(x-x̂) , Val(0.1)) * x
+    rbf_gaussian′(norm(x-x̂)^2 , Val(1.)) * 2*(x-x̂)
     end
 function Δk_gauss(x,x̂)
-    rbf_gaussian′′(norm(x-x̂) , Val(0.1))  + rbf_gaussian′(norm(x-x̂) , Val(0.1)) *  dot(x , x)
+    d = dot(x-x̂,x-x̂)
+    4*rbf_gaussian′′(d , Val(1.))  + 4*rbf_gaussian′(d , Val(1.)) * d
     end
 #+end_src
 
@@ -158,12 +169,24 @@ u(x) &= g_D(x) & \text{on} \quad  \Gamma_D \\
 \end{align}
 where
 #+begin_src julia
-a(x::SVector{3}) = x[1] + 2
-∇a(x::SVector{3}) = SVector{3}(1.,0.,0.)
+using StaticArrays
+a(x::SVector{2}) = x[1] + 2
+∇a(x::SVector{2}) = SVector{2}(1.,0.)
 #+end_src
 
 #+RESULTS:
 : ∇a (generic function with 2 methods)
+
+#+begin_src julia
+α = 2
+β = 0.5
+f(x) = - α*norm(x ,2)^(α - 2)*(3x[1] +4) - α*(α -2) * (x[1] + 2) * norm(x,2)^(α - 3)
+g_D(x) = norm(x,2)^α
+g_N(x , n) = α* norm(x,2)^(α-2)*(x[1] +2) * x ⋅ n
+#+end_src
+
+#+RESULTS:
+: g_N (generic function with 1 method)
 
 ** Optimization Problem
 Aim of the regression is then, to minimize
@@ -185,41 +208,331 @@ leading to the linear system
 \label{eq:5}
 - \sum_{j=1}^{n} a_j \left( \left< \nabla_x a(x_i) , \nabla_x k(x_j,x_i)  \right> - a(x_i) \Delta_x k(x_j,x_i)\right) &= f(x_i)
 \end{align}
-* Linear Sytem
-#+begin_src julia :tangle kernel.jl
+** Preamble
+#+begin_src julia :tangle src/kernel.jl :eval never
+
+module Kernel
 using StaticArrays
 using KernelAbstractions
-@kernel function assemble_matrix!(A ,@Const(X) , k, ∇k , Δk , a , ∇a)
+using LinearAlgebra
+#+end_src
+** Linear Sytem
+#+begin_src julia :tangle src/kernel.jl
+
+@kernel function linear_matrix!(A ,@Const(X_L) , @Const(X) , k, ∇k , Δk , a , ∇a)
     # boilerplate
     Iᵢⱼ = @index(Global , Cartesian)
-    @inbounds xᵢ= SVector{3}(view(X , : , Iᵢⱼ[1]))
-    @inbounds xⱼ= SVector{3}(view(X , : , Iᵢⱼ[2]))
+    @inbounds xᵢ= SVector{2}(view(X_L , : , Iᵢⱼ[1]))
+    @inbounds xⱼ= SVector{2}(view(X , : , Iᵢⱼ[2]))
     # element computation
-    A[Iᵢⱼ] = ∇a(xᵢ)⋅∇k(xᵢ,xⱼ) -  a(xᵢ)Δk(xⱼ,xᵢ)
+    @inbounds A[Iᵢⱼ] = ∇a(xᵢ)⋅∇k(xᵢ,xⱼ) -  a(xᵢ)Δk(xⱼ,xᵢ)
     end
 #+end_src
 
 #+RESULTS:
+: linear_matrix! (generic function with 4 methods)
 
-#+begin_src julia :results table
-X = rand(3,10)
-A = rand(10,10)
-assemble = assemble_matrix!( CPU() , 64 , size(A))
-assemble(A  , X , k_gauss , ∇k_gauss , Δk_gauss , a , ∇a)
-A
+** Dirichlet boundary
+The Dirichlet boundary confitions are dealt with as additional condition in the linear system
+#+begin_src julia :tangle src/kernel.jl
+
+@kernel function dirichlet_matrix!(A , @Const(X_D) , @Const(X) ,k)
+    Iᵢⱼ =  @index(Global , Cartesian)
+    @inbounds xᵢ= SVector{2}(view(X_D , : , Iᵢⱼ[1])) # Essentially X[:,1]
+    @inbounds xⱼ= SVector{2}(view(X , : , Iᵢⱼ[2]))
+    K = k(xᵢ , xⱼ)
+    if isnan(K)
+        @print(Iᵢⱼ , "\n")
+        @print(xᵢ , "\n")
+        @print(xⱼ , "\n")
+        end
+    @inbounds A[Iᵢⱼ] = K
+end
 #+end_src
 
 #+RESULTS:
-| 0.216 | 0.302 | 0.329 | 0.036 | 0.159 | 0.043 | 0.165 | -0.033 | 0.071 | 0.193 |
-| 0.201 | 0.320 | 0.344 | 0.042 | 0.156 | 0.048 | 0.156 | -0.025 | 0.078 | 0.194 |
-| 0.199 | 0.318 | 0.357 | 0.037 | 0.156 | 0.042 | 0.153 | -0.034 | 0.074 | 0.196 |
-| 0.196 | 0.289 | 0.317 | 0.058 | 0.162 | 0.060 | 0.156 | -0.009 | 0.091 | 0.197 |
-| 0.202 | 0.305 | 0.340 | 0.023 | 0.168 | 0.029 | 0.153 | -0.055 | 0.063 | 0.203 |
-| 0.204 | 0.297 | 0.324 | 0.051 | 0.163 | 0.058 | 0.161 | -0.017 | 0.084 | 0.198 |
-| 0.214 | 0.300 | 0.327 | 0.037 | 0.160 | 0.044 | 0.167 | -0.032 | 0.072 | 0.194 |
-| 0.198 | 0.283 | 0.309 | 0.059 | 0.164 | 0.064 | 0.159 | -0.005 | 0.091 | 0.196 |
-| 0.188 | 0.272 | 0.296 | 0.072 | 0.159 | 0.074 | 0.154 |  0.014 | 0.107 | 0.190 |
-| 0.200 | 0.310 | 0.346 | 0.026 | 0.163 | 0.032 | 0.152 | -0.051 | 0.066 | 0.210 |
-#+TBLFM: @1$1..@>$>=@0$0;%.3f
+: julia-async:f35f44a7-4d8a-4825-9dd8-78915cf364bd
+** Neumann Boundary
+
+#+begin_src julia :tangle src/kernel.jl
+
+@kernel function neumann_matrix!(A , @Const(X_N) , @Const(X) , @Const(N) , a , ∇k )
+    Iᵢⱼ =  @index(Global , Cartesian)
+    @inbounds xᵢ= SVector{2}(view(X_N , : , Iᵢⱼ[1])) # Essentially X[:,1]
+    @inbounds xⱼ= SVector{2}(view(X , : , Iᵢⱼ[2]))
+    @inbounds nᵢ= SVector{2}(view(N , : , Iᵢⱼ[1]))
+    @inbounds A[Iᵢⱼ] = a(xᵢ) * (nᵢ ⋅ ∇k(xᵢ , xⱼ))
+    end
+#+end_src
+
+#+RESULTS:
+** Combined System
+
+#+begin_src julia :tangle src/kernel.jl
+
+@kernel function system_matrix!(A , @Const(X_N) , @Const(X) , @Const(N) , a , ∇k )
+    Iᵢⱼ =  @index(Global , Cartesian)
+    @inbounds xᵢ= SVector{2}(view(X_N , : , Iᵢⱼ[1])) # Essentially X[:,1]
+    @inbounds xⱼ= SVector{2}(view(X , : , Iᵢⱼ[2]))
+    @inbounds nᵢ= SVector{2}(view(N , : , Iᵢⱼ[1]))
+
+    @inbounds A[Iᵢⱼ] = a(xᵢ) * (nᵢ ⋅ ∇k(xᵢ , xⱼ))
+    end
+#+end_src
+** Postable
+#+begin_src julia :tangle src/kernel.jl :eval never
+
+export linear_matrix!
+export dirichlet_matrix!
+export neumann_matrix!
+end
+#+end_src
+* Solver
+#+begin_src julia :tangle src/pdesolver.jl :eval never
+module PDESolvers
+
+export PDESolver, PDESystem, solve
+include("kernel.jl")
+
+using .Kernel
+using KernelAbstractions
+using LinearAlgebra
+#+end_src
+
+#+RESULTS:
+
+#+begin_src julia :tangle src/pdesolver.jl :eval never
+
+struct PDESystem
+    k :: Function
+    ∇k :: Function
+    Δk :: Function
+    a :: Function
+    ∇a::Function
+    f::Function
+    g_D::Function
+    g_N::Function
+end
+
+struct PDESolver
+    S::PDESystem
+    X_L :: AbstractMatrix
+    X_D :: AbstractMatrix
+    X_N :: AbstractMatrix
+    N :: AbstractMatrix
+    α :: AbstractVector
+end
+
+function assemble_kernel_matrix(
+    S,
+    X_L :: AbstractMatrix ,
+    X_D :: AbstractMatrix ,
+    X_N :: AbstractMatrix ,
+    N :: AbstractMatrix
+)
+    local X = [X_L X_D X_N]
+    DOF = size(X,2)
+    K = zeros(DOF ,DOF)
+    K_linear = @view K[begin:size(X_L , 2) , :]
+    K_dirichlet = @view K[size(X_L , 2)+1:end - size(X_N ,2), :]
+    K_neumann = @view K[end-size(X_N ,2)+1:end, :]
 
 
+    cpu_linear! = linear_matrix!( CPU() , 64 , size(K_linear))
+    cpu_dirichlet! = dirichlet_matrix!( CPU() , 64 , size(K_dirichlet))
+    cpu_neumann! = neumann_matrix!( CPU() , 64 , size(K_neumann))
+
+    cpu_linear!(K_linear  , X_L , X , S.k , S.∇k , S.Δk , S.a , S.∇a)
+    cpu_dirichlet!(K_dirichlet  , X_D , X , S.k )
+    cpu_neumann!(K_neumann  , X_N , X , N ,S.a, S.∇k)
+    KernelAbstractions.synchronize(get_backend(K))
+    return K
+end
+function solve(
+    S,
+    X_L :: AbstractMatrix ,
+    X_D :: AbstractMatrix ,
+    X_N :: AbstractMatrix ,
+    N :: AbstractMatrix
+    )
+    K = assemble_kernel_matrix(S, X_L , X_D , X_N , N)
+    b = get_boundary(S,X_L , X_D , X_N , N)
+    α =  b'*pinv(K)
+    return PDESolver(S, X_L , X_D , X_N , N , α' )
+    #return b, K
+
+    end
+function (f::PDESolver)(X)
+    local X_col = [f.X_L f.X_D f.X_N]
+    K = zeros(size(X,2)  , size(X_col ,2))
+    kernel_matrix! = dirichlet_matrix!( CPU() , 64 , size(K))
+    kernel_matrix!(K, X , X_col , f.S.k )
+return K * f.α
+end
+
+function get_boundary(
+    S,
+    X_L::AbstractMatrix ,
+    X_D::AbstractMatrix ,
+    X_N::AbstractMatrix,
+    N::AbstractMatrix
+    )
+    y = [S.f.(eachcol(X_L)); S.g_D.(eachcol(X_D)); S.g_N.(eachcol(X_N) , eachcol(N))]
+    end
+
+#+end_src
+
+#+begin_src julia :tangle src/pdesolver.jl
+end
+#+end_src
+
+* Results
+#+begin_src julia
+includet("src/pdesolver.jl")
+#+end_src
+
+#+RESULTS:
+
+#+begin_src julia
+using .PDESolvers
+#+end_src
+
+#+RESULTS:
+
+#+begin_src julia
+S = PDESystem(k_gauss , ∇k_gauss , Δk_gauss , a, ∇a , f, g_D , g_N )
+#+end_src
+
+#+RESULTS:
+: PDESystem(Main.k_gauss, Main.∇k_gauss, Main.Δk_gauss, Main.a, Main.∇a, Main.f, Main.g_D, Main.g_N)
+
+
+
+#+begin_src julia
+function unit_box_normals(γ::Float64)
+    p = SVector{2}(0,0)
+    xnormal = SVector{2}(1,0)
+    ynormal = SVector{2}(0,1)
+    branch = γ % 4.
+    if floor(branch) == 0.
+        n = -ynormal
+    elseif floor(branch) == 1.
+        n = xnormal
+    elseif floor(branch) == 2.
+        n = ynormal
+    elseif floor(branch) == 3.
+        n = -xnormal
+    else
+        throw("γ=$γ not in range [0 , 4]")
+    end
+return n
+    end
+function unit_box_path(γ::Float64)
+    p = SVector{2}(0,0)
+    xnormal = SVector{2}(1,0)
+    ynormal = SVector{2}(0,1)
+    branch = γ % 4.
+    if floor(branch) == 0.
+        p = branch%1 * xnormal
+    elseif floor(branch) == 1.
+        p = xnormal +  branch%1 * ynormal
+    elseif floor(branch) == 2.
+        p = (1-branch%1)*xnormal + ynormal
+    elseif floor(branch) == 3.
+        p = (1-branch%1) * ynormal
+    else
+        throw("γ=$γ not in range [0 , 4]")
+    end
+return p
+    end
+#+end_src
+
+#+RESULTS:
+: unit_box_path (generic function with 1 method)
+
+#+begin_src julia
+using Random
+rng = MersenneTwister(0)
+r = 0:0.2:1.99
+N = unit_box_normals.(r)
+N = reduce(hcat , N)
+X_N = unit_box_path.(r)
+X_N = reduce(hcat , X_N)
+X_D = unit_box_path.(2:0.1:4)
+X_D = reduce(hcat , X_D)
+X_L = rand(rng , Float64, 2,100)
+#+end_src
+
+#+RESULTS:
+: (("0.44373084494754944" "0.07892681580529581" "0.559106625669447" "0.9425709791902743" "0.48785917694153547" "0.7857840841423287" "0.3017574987032916" "0.6796020014334652" "0.7541709343165697" "0.6553652292341736" "0.89179931065241" "0.3780445925677818" "0.6796025199206561" "0.6046193371046116" "0.8933410670564788" "0.8654666447090715" "0.8914938016764471" "0.18610720239953094" "0.7561568657712872" "0.44528433145260515" "0.9696417725691979" "0.8087651016663615" "0.25610595083609256" "0.37138747121212035" "0.6159900231555204" "0.1356496333108077" "0.5645286188099554" "0.9719617493553843" "0.061366829718462856" "0.4585949426970206" "0.8299887311475092" "0.06667976957690724" "0.6610270108009304" "0.39319632973696295" "0.687070300947694" "0.5900260917926095" "0.9405013082709226" "0.14443833295460218" "0.3359277493526316" "0.7448558015155979" "0.291450401757138" "0.8196807663289543" "0.5986130273184203" "0.26955382564496855" "0.6592127107000334" "0.20869191542486099" "0.24401413325254384" "0.7693432281143233" "0.09012312287052149" "0.2810431320646529" "0.2752328598998388" "0.6856882226466181" "0.5680636711525475" "0.3659395292034653" "0.05468019152686576" "0.5046998570470287" "0.6086461929502132" "0.02345486240845407" "0.8432915711007192" "0.37847877737140867" "0.45274529239598515" "0.34594697944076613" "0.5004462969448631" "0.3976274212783737" "0.7684432186616006" "0.21213569725297" "0.06594702486204396" "0.09606429900281577" "0.20550478238974001" "0.02100937956026039" "0.3399791101327534" "0.7504633485612029" "0.3356418582548364" "0.15548351082690903" "0.8437798862386308" "0.14373890531772582" "0.9883291346377374" "0.5456316774880647" "0.9089866976611372" "0.38898462335622064" "0.3956456166552973" "0.13876351482930271" "0.5393193202718978" "0.0644401931180334" "0.3532786763801603" "0.0834908366224183" "0.5466778161413699" "0.23645550979880303" "0.9683203770699633" "0.884861432658866" "0.983950627182637" "0.02518572825498744" "0.9478493987342336" "0.22125375341032405" "0.8233621081318514" "0.06562428438826062" "0.11627474544940664" "0.8771331209014392" "0.964521618692638" "0.49674343455903314") ("0.012341715444441181" "0.16983717354013406" "0.09920468528804882" "0.9632256863827882" "0.727832145515513" "0.4504541380106568" "0.2975755734713885" "0.37140687603818456" "0.7574181903211246" "0.7375753349071723" "0.8754230383109352" "0.15374868315827972" "0.02063481196607042" "0.1339908287133349" "0.6371308048858195" "0.21213758500318236" "0.33667058193694177" "0.6741364657649198" "0.788513553927884" "0.8184183417021202" "0.6171636188124605" "0.19036185373793546" "0.66458254694391" "0.18438617571923843" "0.46731578429910625" "0.17954587309215597" "0.06621710570725403" "0.9717787744024684" "0.10455729773350031" "0.803853821921793" "0.8398721036617922" "0.5198137357212782" "0.3353697944940459" "0.1826066306427927" "0.7117144790900987" "0.3471126077351687" "0.5004050497763186" "0.43441000294477394" "0.7125205430295269" "0.35639711217444847" "0.3669947357294494" "0.8210882218467181" "0.6351970508705151" "0.05624453177453481" "0.6454407225688521" "0.6399578783106901" "0.5091982352679316" "0.8801338965913139" "0.9217677057650668" "0.6124338377840888" "0.5527467456245361" "0.7093184508451813" "0.9237869805286902" "0.9974835618800608" "0.08595882419448841" "0.9498038199151266" "0.29432665812789605" "0.5577774058580562" "0.35041967334166446" "0.4209857879429628" "0.9926673695243946" "0.42544003382998974" "0.4707577790787181" "0.8870030006330558" "0.7982439400593302" "0.7951528838199926" "0.7821293769982802" "0.8558287546197174" "0.045584943529882294" "0.8771240015261976" "0.88446317845295" "0.7165300655221927" "0.013333693115964662" "0.013678457758851126" "0.8258149891273072" "0.24005110619110548" "0.8190791807059496" "0.8271330046066434" "0.6746626137899527" "0.14820315927994931" "0.6506321105271906" "0.22038334816425764" "0.04486928075983543" "0.14905459305493518" "0.4153076033744658" "0.24717908026349833" "0.7769700853659758" "0.26886395978815725" "0.7271933660974446" "0.05487784169192467" "0.7077691029154758" "0.1931003610324511" "0.06166877426932915" "0.04608824474823359" "0.702680991271857" "0.33821145981907663" "0.2531171359750224" "0.19964829932872807" "0.6015051622695688" "0.5144568258896776"))
+
+#+name: fig:collocation-points
+#+begin_src julia :results file graphics :file "images/collocation-points.png"
+using LaTeXStrings
+using Makie
+using GLMakie
+fig = Figure()
+ax = Axis(fig[1,1] , title="Collocation Points")
+
+scatter!(ax,X_L , label="Data Points")
+scatter!(ax,X_D, label="Dirichlet Points")
+scatter!(ax,X_N , label="Neumann Points")
+arrows!(ax,X_N[1,:] , X_N[2,:] , N[1,:] , N[2,:] , lengthscale=0.1)
+axislegend(ax , position=:lt)
+save("images/collocation-points.png",fig )
+#+end_src
+
+#+RESULTS: fig:collocation-points
+[[file:images/collocation-points.png]]
+
+#+begin_src julia
+using LinearAlgebra
+solution = solve(S , X_L , X_D , X_N , N)
+#+end_src
+
+#+RESULTS:
+: PDESolver(PDESystem(Main.k_gauss, Main.∇k_gauss, Main.Δk_gauss, Main.a, Main.∇a, Main.f, Main.g_D, Main.g_N), [0.44373084494754944 0.07892681580529581 0.559106625669447 0.9425709791902743 0.48785917694153547 0.7857840841423287 0.3017574987032916 0.6796020014334652 0.7541709343165697 0.6553652292341736 0.89179931065241 0.3780445925677818 0.6796025199206561 0.6046193371046116 0.8933410670564788 0.8654666447090715 0.8914938016764471 0.18610720239953094 0.7561568657712872 0.44528433145260515 0.9696417725691979 0.8087651016663615 0.25610595083609256 0.37138747121212035 0.6159900231555204 0.1356496333108077 0.5645286188099554 0.9719617493553843 0.061366829718462856 0.4585949426970206 0.8299887311475092 0.06667976957690724 0.6610270108009304 0.39319632973696295 0.687070300947694 0.5900260917926095 0.9405013082709226 0.14443833295460218 0.3359277493526316 0.7448558015155979 0.291450401757138 0.8196807663289543 0.5986130273184203 0.26955382564496855 0.6592127107000334 0.20869191542486099 0.24401413325254384 0.7693432281143233 0.09012312287052149 0.2810431320646529 0.2752328598998388 0.6856882226466181 0.5680636711525475 0.3659395292034653 0.05468019152686576 0.5046998570470287 0.6086461929502132 0.02345486240845407 0.8432915711007192 0.37847877737140867 0.45274529239598515 0.34594697944076613 0.5004462969448631 0.3976274212783737 0.7684432186616006 0.21213569725297 0.06594702486204396 0.09606429900281577 0.20550478238974001 0.02100937956026039 0.3399791101327534 0.7504633485612029 0.3356418582548364 0.15548351082690903 0.8437798862386308 0.14373890531772582 0.9883291346377374 0.5456316774880647 0.9089866976611372 0.38898462335622064 0.3956456166552973 0.13876351482930271 0.5393193202718978 0.0644401931180334 0.3532786763801603 0.0834908366224183 0.5466778161413699 0.23645550979880303 0.9683203770699633 0.884861432658866 0.983950627182637 0.02518572825498744 0.9478493987342336 0.22125375341032405 0.8233621081318514 0.06562428438826062 0.11627474544940664 0.8771331209014392 0.964521618692638 0.49674343455903314; 0.012341715444441181 0.16983717354013406 0.09920468528804882 0.9632256863827882 0.727832145515513 0.4504541380106568 0.2975755734713885 0.37140687603818456 0.7574181903211246 0.7375753349071723 0.8754230383109352 0.15374868315827972 0.02063481196607042 0.1339908287133349 0.6371308048858195 0.21213758500318236 0.33667058193694177 0.6741364657649198 0.788513553927884 0.8184183417021202 0.6171636188124605 0.19036185373793546 0.66458254694391 0.18438617571923843 0.46731578429910625 0.17954587309215597 0.06621710570725403 0.9717787744024684 0.10455729773350031 0.803853821921793 0.8398721036617922 0.5198137357212782 0.3353697944940459 0.1826066306427927 0.7117144790900987 0.3471126077351687 0.5004050497763186 0.43441000294477394 0.7125205430295269 0.35639711217444847 0.3669947357294494 0.8210882218467181 0.6351970508705151 0.05624453177453481 0.6454407225688521 0.6399578783106901 0.5091982352679316 0.8801338965913139 0.9217677057650668 0.6124338377840888 0.5527467456245361 0.7093184508451813 0.9237869805286902 0.9974835618800608 0.08595882419448841 0.9498038199151266 0.29432665812789605 0.5577774058580562 0.35041967334166446 0.4209857879429628 0.9926673695243946 0.42544003382998974 0.4707577790787181 0.8870030006330558 0.7982439400593302 0.7951528838199926 0.7821293769982802 0.8558287546197174 0.045584943529882294 0.8771240015261976 0.88446317845295 0.7165300655221927 0.013333693115964662 0.013678457758851126 0.8258149891273072 0.24005110619110548 0.8190791807059496 0.8271330046066434 0.6746626137899527 0.14820315927994931 0.6506321105271906 0.22038334816425764 0.04486928075983543 0.14905459305493518 0.4153076033744658 0.24717908026349833 0.7769700853659758 0.26886395978815725 0.7271933660974446 0.05487784169192467 0.7077691029154758 0.1931003610324511 0.06166877426932915 0.04608824474823359 0.702680991271857 0.33821145981907663 0.2531171359750224 0.19964829932872807 0.6015051622695688 0.5144568258896776], [1.0 0.8999999999999999 0.7999999999999998 0.7000000000000002 0.6000000000000001 0.5 0.3999999999999999 0.2999999999999998 0.20000000000000018 0.10000000000000009 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0; 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 0.8999999999999999 0.7999999999999998 0.7000000000000002 0.6000000000000001 0.5 0.3999999999999999 0.2999999999999998 0.20000000000000018 0.10000000000000009 0.0], [0.0 0.2 0.4 0.6 0.8 1.0 1.0 1.0 1.0 1.0; 0.0 0.0 0.0 0.0 0.0 0.0 0.19999999999999996 0.3999999999999999 0.6000000000000001 0.8], [0 0 0 0 0 1 1 1 1 1; -1 -1 -1 -1 -1 0 0 0 0 0], [-0.013389157047654868, 0.006900960912947142, 0.06070875919752122, 0.021536269901389134, 0.029904509361215276, 0.06239166664603802, 0.041602387343045256, 0.057718729320014955, 0.02946497677944136, 0.021424955281876316, 0.04189502163671561, 0.047252786904387604, 0.05240853940459279, 0.061120514741134786, 0.015882256776098027, 0.04546155208105173, 0.0642774909982522, 0.022423716352258555, 0.04096105697849589, 0.019207801938519092, 0.01600945618009383, 0.052641870285577715, -0.000876110012778695, 0.04166611659281126, 0.036990535190057766, 0.012783487852328733, 0.05929151945315018, 0.05877550959053187, -0.007795834534673317, 0.02196970489087563, 0.05876442864895753, 0.013588615714421222, 0.05354651248550947, 0.049490404924990475, 0.03824596365584378, 0.05656562524220826, 0.07203168294045893, -0.014870018810674276, 0.02693079764411533, 0.057388298960563716, 0.04893985853466605, 0.026106910531969816, 0.039869588420733286, 0.03368977477850028, 0.04632470525666297, -0.016894226755367836, 0.03678258317465621, 0.050492862268735575, -0.024913734693080333, -0.004992091879147712, 0.0312725721333388, 0.03942413752987734, 0.021158715597901848, -0.005866055184727942, -0.00258525581322255, 0.010933713134328572, 0.020838972349201897, 0.023816966554396236, 0.06403336057664875, 0.02662218640876266, 0.006636526477508091, 0.027280065880746236, 0.03656802586856691, 0.013793482995412236, 0.052175656270321086, -0.02579629239043492, -0.03780265413438825, -0.02910729173122644, -0.042697203885253644, -0.025137050582597915, 0.012779038945723104, 0.051434365841075524, -0.019443150454624667, 0.03834047714552798, 0.05890202726739328, 0.047386622039870256, 0.026387207115920637, 0.016235821306424314, 0.0566966498183136, 0.018481322762742416, 0.002464283579566757, 0.010174510464634138, -0.0009092274285652105, -0.020730612837980764, -0.01223204459790193, 0.006033010976066491, 0.02727950945892618, 0.05283592911578923, -0.0019542136893695473, 0.03946320780508569, 0.07384778311794979, 0.03693172439467371, 0.04683792567426246, 0.04315736364905891, 0.06312349484242691, -0.044767790139546036, 0.04093097426748077, 0.04018383808046797, 0.050606627493731814, 0.009727688183457463, -0.00021496283951584114, -0.0007535678962183502, -0.0012025831564467034, -0.0014651504013672915, -0.0014681278359967927, -0.0011811495475206031, -0.0006265586302757157, 0.00012316001260953023, 0.0009601293468218794, 0.0017640139279811744, 0.0023093970708080052, 0.00245614228780695, 0.002592075129626467, 0.0027154602385678025, 0.002823905598366591, 0.002914220783093735, 0.0029824685039499476, 0.0030242314068259896, 0.0030350716513388213, 0.0030111182381789064, 0.0029496860361943483, -0.0008384572693192918, 0.0020582595669667203, 0.00422509792114315, 0.004279310276538498, 0.007040857339583086, 0.019110971542991014, 0.021760837090249757, 0.022755233109681704, 0.021818631957568023, 1.407750642238095e-14])
+
+#+name: fig:solution
+#+begin_src julia :results file graphics :file "images/solution.png"
+using GLMakie
+X = range(-1 , 1 , 100)
+Y = range(-1 , 1 , 100)
+grid = [ [x,y] for x in X , y in Y]
+grid = reduce(vcat , grid)
+grid = reshape(grid, 2,:)
+fig = Figure()
+ax = Axis(fig[1,1])
+sol = solution(grid)
+sol = reshape(sol , size(X,1) , :)
+hm = heatmap!(ax , X,Y, sol)
+Colorbar(fig[:, end+1], hm)
+save("images/solution.png",fig )
+#+end_src
+
+#+RESULTS: fig:solution
+[[file:images/solution.png]]
+
+#+begin_src julia
+"""
+testing for the boundary can be done with the signed distance function of the domain. Here we use a square domain
+"""
+function sdf_square(x::SVector , r::Float64 , center::SVector)
+    return norm(x-center,Inf) .- r
+end
+function ∇sdf_square(x::SVector{N, Float64}, r::Float64, center::SVector{N, Float64}) where N
+    v = x - center
+    abs_v = abs.(v)
+    i_star = argmax(abs_v)
+    g = zeros(Float64, N)
+    g[i_star] = sign(v[i_star])
+    return SVector{N, Float64}(g)
+end
+#+end_src
+
+#+RESULTS:
+: ∇sdf_square (generic function with 2 methods)
+
+
+
+#+RESULTS:

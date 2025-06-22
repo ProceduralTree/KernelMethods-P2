@@ -3,6 +3,7 @@ using KernelAbstractions: ndrange
 using KernelAbstractions
 using StaticArrays
 using CUDA
+using .Kernel
 
 @kernel function assemble!(A,@Const(X))
     I = @index(Global, Cartesian)
