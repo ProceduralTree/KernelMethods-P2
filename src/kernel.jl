@@ -4,7 +4,8 @@
 module Kernel
 using StaticArrays
 using KernelAbstractions
-using LinearAlgebra;
+using LinearAlgebra
+using ForwardDiff;
 
 # Linear Sytem
 
@@ -47,10 +48,43 @@ end;
     @inbounds A[Iᵢⱼ] = a(xᵢ) * (nᵢ ⋅ ∇k(xᵢ , xⱼ))
     end;
 
+# right hand side
+
+ ;
+@kernel function apply_function_colwise!(A ,@Const(X) , f::Function)
+    # boilerplate
+    Iᵢ = @index(Global , Cartesian)
+    @inbounds xᵢ= SVector{2}(view(X , : , Iᵢ[1]))
+    # element computation
+    @inbounds A[Iᵢ] = f(xᵢ)
+    end;
+
+# Combined System
+
+
+ ;
+@kernel function system_matrix!(A ,@Const(X), a , ∇a ,k, ∇k, Δk  , sdf , grad_sdf , sdf_beta)
+    Iᵢⱼ =  @index(Global , Cartesian)
+    @inbounds xᵢ= SVector{2}(view(X, : , Iᵢⱼ[1])) # Essentially X[:,1]
+    @inbounds xⱼ= SVector{2}(view(X , : , Iᵢⱼ[2]))
+    if sdf(xᵢ) < 1e-10
+        if sdf_beta(xᵢ) < 0
+            @inbounds nᵢ= grad_sdf(xᵢ)
+            @inbounds A[Iᵢⱼ] = a(xᵢ) * (nᵢ ⋅ ∇k(xᵢ , xⱼ))
+        else
+           @inbounds A[Iᵢⱼ] =k(xᵢ , xⱼ)
+        end
+    else
+        @inbounds A[Iᵢⱼ] = ∇a(xᵢ)⋅∇k(xᵢ,xⱼ) -  a(xᵢ)*Δk(xⱼ,xᵢ)
+    end
+    end;
+
 # Postable
 
  ; 
 export linear_matrix!
 export dirichlet_matrix!
 export neumann_matrix!
+export apply_function_colwise!
+export system_matrix!
 end;
