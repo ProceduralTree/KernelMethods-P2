@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2025-06-24 Tue 21:42 -->
+<!-- 2025-06-25 Wed 00:40 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Kernel Collocation Excercise</title>
@@ -899,35 +899,35 @@ pre {
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#orgd66f93e">1. Regression Approach</a>
+<li><a href="#org38b1ba2">1. Regression Approach</a>
 <ul>
-<li><a href="#orgabe6dd3">1.1. right hand side</a></li>
+<li><a href="#orga597715">1.1. right hand side</a></li>
 </ul>
 </li>
-<li><a href="#org3051616">2. Solver</a></li>
-<li><a href="#orgbf9effb">3. Kernel Implementation</a>
+<li><a href="#orgbe6a67b">2. Solver</a></li>
+<li><a href="#org62c5553">3. Kernel Implementation</a>
 <ul>
-<li><a href="#org027e23e">3.1. squared rbf</a></li>
-<li><a href="#orgeb13cec">3.2. Gauss</a></li>
-<li><a href="#orgbc01b85">3.3. Cardinal B<sub>3</sub> Spline</a></li>
-<li><a href="#org1fe51bf">3.4. Thin Plate</a></li>
+<li><a href="#orgca437c0">3.1. squared rbf</a></li>
+<li><a href="#orgb9a375d">3.2. Gauss</a></li>
+<li><a href="#orgf6f1b44">3.3. Cardinal B<sub>3</sub> Spline</a></li>
+<li><a href="#orga2d629b">3.4. Thin Plate</a></li>
 </ul>
 </li>
-<li><a href="#orgdad46ec">4. PDE</a>
+<li><a href="#org223c809">4. PDE</a>
 <ul>
-<li><a href="#org18a7f83">4.1. PDE Poisson</a>
+<li><a href="#org3472276">4.1. PDE Poisson</a>
 <ul>
-<li><a href="#org39d3368">4.1.1. Result</a></li>
+<li><a href="#org4026d7b">4.1.1. Result</a></li>
 </ul>
 </li>
-<li><a href="#orgd7bfeee">4.2. Diffusion PDE</a>
+<li><a href="#orgdf5eaa7">4.2. Diffusion PDE</a>
 <ul>
-<li><a href="#org5bcfdb8">4.2.1. Result</a></li>
+<li><a href="#orgf170d3c">4.2.1. Result</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#org5c2d08a">5. Domains</a></li>
+<li><a href="#org1e84c82">5. Domains</a></li>
 </ul>
 </div>
 </div>
@@ -939,8 +939,8 @@ pre {
 \newtheorem{remark}{Remark}
 \)
 </div>
-<div id="outline-container-orgd66f93e" class="outline-2">
-<h2 id="orgd66f93e"><span class="section-number-2">1.</span> Regression Approach</h2>
+<div id="outline-container-org38b1ba2" class="outline-2">
+<h2 id="org38b1ba2"><span class="section-number-2">1.</span> Regression Approach</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 Aim of this excrcise is to find solutions \(u\in \mathcal{H}_k\) such that they satisfy the following system
@@ -1001,11 +1001,11 @@ this leads to the following Linear system
 this corresponds directly with the System Matrix \(K\), that we compute in julia using a GPU copatible kernel that employs element wise notation
 </p>
 <div class='org-src-wrapper'>
-<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_e53d1ef75be748ebb96c5b49029733b6>&#10697;</button>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_459bb723d2e542a0aa45bdc3005f6686>&#10697;</button>
 <script type='text/javascript'>
-var copyBtnbtn_e53d1ef75be748ebb96c5b49029733b6=document.querySelector('button[name=btn_e53d1ef75be748ebb96c5b49029733b6]');
-copyBtnbtn_e53d1ef75be748ebb96c5b49029733b6.addEventListener('click', function(event) {
-let res = copyTextToClipboard(`\n@kernel function system_matrix!(K ,@Const(X), a , ∇a ,k, ∇k, Δk  , sdf , grad_sdf , sdf_beta)\n    Iᵢⱼ =  @index(Global , Cartesian)\n    @inbounds xᵢ= SVector{2}(view(X, : , Iᵢⱼ[1])) # Essentially X[:,i]\n    @inbounds xⱼ= SVector{2}(view(X, : , Iᵢⱼ[2])) # Essentially X[:,j]\n    # poisson equation\n    @inbounds K[Iᵢⱼ] = -a(xᵢ)*Δk(xᵢ,xⱼ)- ∇a(xᵢ)⋅∇k(xᵢ,xⱼ)\n    if abs(sdf(xᵢ)) < 1e-10\n        if sdf_beta(xᵢ) < 0\n            # Neumann Boundary Condition\n            @inbounds nᵢ= grad_sdf(xᵢ)\n            @inbounds K[Iᵢⱼ] = a(xᵢ) * (nᵢ ⋅ ∇k(xᵢ , xⱼ))\n        else\n          # Dirichlet Boundary\n          @inbounds K[Iᵢⱼ] =k(xᵢ , xⱼ)\n        end\n    end\nend\n`);copyBtnbtn_e53d1ef75be748ebb96c5b49029733b6.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_e53d1ef75be748ebb96c5b49029733b6.innerHTML = '&#10697;'}, 3000);
+var copyBtnbtn_459bb723d2e542a0aa45bdc3005f6686=document.querySelector('button[name=btn_459bb723d2e542a0aa45bdc3005f6686]');
+copyBtnbtn_459bb723d2e542a0aa45bdc3005f6686.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`\n@kernel function system_matrix!(K ,@Const(X), a , ∇a ,k, ∇k, Δk  , sdf , grad_sdf , sdf_beta)\n    Iᵢⱼ =  @index(Global , Cartesian)\n    @inbounds xᵢ= SVector{2}(view(X, : , Iᵢⱼ[1])) # Essentially X[:,i]\n    @inbounds xⱼ= SVector{2}(view(X, : , Iᵢⱼ[2])) # Essentially X[:,j]\n    # poisson equation\n    @inbounds K[Iᵢⱼ] = -a(xᵢ)*Δk(xᵢ,xⱼ)- ∇a(xᵢ)⋅∇k(xᵢ,xⱼ)\n    if abs(sdf(xᵢ)) < 1e-10\n        if sdf_beta(xᵢ) < 0\n            # Neumann Boundary Condition\n            @inbounds nᵢ= grad_sdf(xᵢ)\n            @inbounds K[Iᵢⱼ] = a(xᵢ) * (nᵢ ⋅ ∇k(xᵢ , xⱼ))\n        else\n          # Dirichlet Boundary\n          @inbounds K[Iᵢⱼ] =k(xᵢ , xⱼ)\n        end\n    end\nend\n`);copyBtnbtn_459bb723d2e542a0aa45bdc3005f6686.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_459bb723d2e542a0aa45bdc3005f6686.innerHTML = '&#10697;'}, 3000);
 });
 </script>
 </div><div class="org-src-container">
@@ -1030,18 +1030,18 @@ let res = copyTextToClipboard(`\n@kernel function system_matrix!(K ,@Const(X), a
 </pre>
 </div></div>
 </div>
-<div id="outline-container-orgabe6dd3" class="outline-3">
-<h3 id="orgabe6dd3"><span class="section-number-3">1.1.</span> right hand side</h3>
+<div id="outline-container-orga597715" class="outline-3">
+<h3 id="orga597715"><span class="section-number-3">1.1.</span> right hand side</h3>
 <div class="outline-text-3" id="text-1-1">
 <p>
 The right hand side of the system is computed in a similar Fashion
 </p>
 <div class='org-src-wrapper'>
-<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_76113fca490144cb87de81164b6204c5>&#10697;</button>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_8241890ea3c343f6ac759a49fe8a0f27>&#10697;</button>
 <script type='text/javascript'>
-var copyBtnbtn_76113fca490144cb87de81164b6204c5=document.querySelector('button[name=btn_76113fca490144cb87de81164b6204c5]');
-copyBtnbtn_76113fca490144cb87de81164b6204c5.addEventListener('click', function(event) {
-let res = copyTextToClipboard(`\n@kernel function apply_function_colwise!(B ,@Const(X) , f , g_D , g_N , sdf  , grad_sdf, sdf_beta)\n    # boilerplate\n    Iᵢ = @index(Global , Cartesian)\n    @inbounds xᵢ= SVector{2}(view(X , : , Iᵢ[1]))\n    # poisson equation\n\n    @inbounds B[Iᵢ] = f(xᵢ)\n    if abs(sdf(xᵢ)) < 1e-10\n         if sdf_beta(xᵢ) < 0\n             # Neumann Boundary Condition\n             @inbounds nᵢ= grad_sdf(xᵢ)\n             @inbounds B[Iᵢ] = g_N(xᵢ , nᵢ )\n         else\n            # Dirichlet Boundary\n            @inbounds B[Iᵢ] = g_D(xᵢ)\n         end\n     end\nend\n`);copyBtnbtn_76113fca490144cb87de81164b6204c5.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_76113fca490144cb87de81164b6204c5.innerHTML = '&#10697;'}, 3000);
+var copyBtnbtn_8241890ea3c343f6ac759a49fe8a0f27=document.querySelector('button[name=btn_8241890ea3c343f6ac759a49fe8a0f27]');
+copyBtnbtn_8241890ea3c343f6ac759a49fe8a0f27.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`\n@kernel function apply_function_colwise!(B ,@Const(X) , f , g_D , g_N , sdf  , grad_sdf, sdf_beta)\n    # boilerplate\n    Iᵢ = @index(Global , Cartesian)\n    @inbounds xᵢ= SVector{2}(view(X , : , Iᵢ[1]))\n    # poisson equation\n\n    @inbounds B[Iᵢ] = f(xᵢ)\n    if abs(sdf(xᵢ)) < 1e-10\n         if sdf_beta(xᵢ) < 0\n             # Neumann Boundary Condition\n             @inbounds nᵢ= grad_sdf(xᵢ)\n             @inbounds B[Iᵢ] = g_N(xᵢ , nᵢ )\n         else\n            # Dirichlet Boundary\n            @inbounds B[Iᵢ] = g_D(xᵢ)\n         end\n     end\nend\n`);copyBtnbtn_8241890ea3c343f6ac759a49fe8a0f27.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_8241890ea3c343f6ac759a49fe8a0f27.innerHTML = '&#10697;'}, 3000);
 });
 </script>
 </div><div class="org-src-container">
@@ -1069,15 +1069,15 @@ let res = copyTextToClipboard(`\n@kernel function apply_function_colwise!(B ,@Co
 </div>
 </div>
 </div>
-<div id="outline-container-org3051616" class="outline-2">
-<h2 id="org3051616"><span class="section-number-2">2.</span> Solver</h2>
+<div id="outline-container-orgbe6a67b" class="outline-2">
+<h2 id="orgbe6a67b"><span class="section-number-2">2.</span> Solver</h2>
 <div class="outline-text-2" id="text-2">
 <div class='org-src-wrapper'>
-<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_21cb27d2688c4fd6b7754972af63d5dc>&#10697;</button>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_3cf743c907894b75809e58577393c29d>&#10697;</button>
 <script type='text/javascript'>
-var copyBtnbtn_21cb27d2688c4fd6b7754972af63d5dc=document.querySelector('button[name=btn_21cb27d2688c4fd6b7754972af63d5dc]');
-copyBtnbtn_21cb27d2688c4fd6b7754972af63d5dc.addEventListener('click', function(event) {
-let res = copyTextToClipboard(`struct PDESystem\n    k :: Function\n    ∇k :: Function\n    Δk :: Function\n    a :: Function\n    ∇a::Function\n    f::Function\n    g_D::Function\n    g_N::Function\n    sdf::Function\n    grad_sdf::Function\n    sdf_beta::Function\nend\n\nstruct PDESolver\n    S::PDESystem\n    X::AbstractMatrix\n    α :: AbstractVector\nend\n\nfunction (f::PDESolver)(X)\n    dev = get_backend(X)\n    print(\"Backend\" , dev)\n    K = KernelAbstractions.zeros(dev , Float32, size(X,2)  , size(f.X ,2))\n    print(\"Size of the system Matrix:\" , size(K))\n    kernel_matrix! = dirichlet_matrix!( dev , 256 , size(K))\n    kernel_matrix!(K, X , f.X , f.S.k )\nreturn K * f.α , K\nend\n\nfunction solve(S, X_col)\n    dev = get_backend(X_col)\n    K = KernelAbstractions.zeros(dev , Float32 , size(X_col , 2) , size(X_col , 2) )\n    sys_matrix! = system_matrix!( dev , 256 , size(K))\n    sys_matrix!(K ,X_col , S.a , S.∇a , S.k , S.∇k , S.Δk , S.sdf , S.grad_sdf , S.sdf_beta  )\n    B = get_boundary(S,X_col)\n    α = lsqr(K,B)\n    return (PDESolver(S,X_col ,α) , K)\n    end\n\n\nfunction get_boundary(\n    S,\n    X\n    )\n    dev = get_backend(X)\n    B = KernelAbstractions.zeros(dev , Float32 , size(X , 2))\n    apply! = apply_function_colwise!(dev , 256 , size(B))\n    apply!(B , X , S.f , S.g_D , S.g_N , S.sdf  , S.grad_sdf, S.sdf_beta)\n    return B\n    end\n\n`);copyBtnbtn_21cb27d2688c4fd6b7754972af63d5dc.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_21cb27d2688c4fd6b7754972af63d5dc.innerHTML = '&#10697;'}, 3000);
+var copyBtnbtn_3cf743c907894b75809e58577393c29d=document.querySelector('button[name=btn_3cf743c907894b75809e58577393c29d]');
+copyBtnbtn_3cf743c907894b75809e58577393c29d.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`struct PDESystem\n    k :: Function\n    ∇k :: Function\n    Δk :: Function\n    a :: Function\n    ∇a::Function\n    f::Function\n    g_D::Function\n    g_N::Function\n    sdf::Function\n    grad_sdf::Function\n    sdf_beta::Function\nend\n\nstruct PDESolver\n    S::PDESystem\n    X::AbstractMatrix\n    α :: AbstractVector\nend\n\nfunction (f::PDESolver)(X)\n    dev = get_backend(X)\n    print(\"Backend\" , dev)\n    K = KernelAbstractions.zeros(dev , Float32, size(X,2)  , size(f.X ,2))\n    print(\"Size of the system Matrix:\" , size(K))\n    kernel_matrix! = dirichlet_matrix!( dev , 256 , size(K))\n    kernel_matrix!(K, X , f.X , f.S.k )\nreturn K * f.α , K\nend\n\nfunction solve(S, X_col)\n    dev = get_backend(X_col)\n    K = KernelAbstractions.zeros(dev , Float32 , size(X_col , 2) , size(X_col , 2) )\n    sys_matrix! = system_matrix!( dev , 256 , size(K))\n    sys_matrix!(K ,X_col , S.a , S.∇a , S.k , S.∇k , S.Δk , S.sdf , S.grad_sdf , S.sdf_beta  )\n    B = get_boundary(S,X_col)\n    α = K \\ B\n    return (PDESolver(S,X_col ,α) , K)\n    end\n\n\nfunction get_boundary(\n    S,\n    X\n    )\n    dev = get_backend(X)\n    B = KernelAbstractions.zeros(dev , Float32 , size(X , 2))\n    apply! = apply_function_colwise!(dev , 256 , size(B))\n    apply!(B , X , S.f , S.g_D , S.g_N , S.sdf  , S.grad_sdf, S.sdf_beta)\n    return B\n    end\n\n`);copyBtnbtn_3cf743c907894b75809e58577393c29d.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_3cf743c907894b75809e58577393c29d.innerHTML = '&#10697;'}, 3000);
 });
 </script>
 </div><div class="org-src-container">
@@ -1117,7 +1117,7 @@ let res = copyTextToClipboard(`struct PDESystem\n    k :: Function\n    ∇k :: 
     sys_matrix! = system_matrix!( dev , <span style="color: #de935f; font-weight: bold;">256</span> , size(K))
     sys_matrix!(K ,X_col , S.a , S.&#8711;a , S.k , S.&#8711;k , S.&#916;k , S.sdf , S.grad_sdf , S.sdf_beta  )
     B = get_boundary(S,X_col)
-    &#945; = lsqr(K,B)
+    &#945; = K <span style="color: #f0c674;">\</span> B
     <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">return</span> (PDESolver(S,X_col ,&#945;) , K)
     <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
 
@@ -1137,11 +1137,11 @@ let res = copyTextToClipboard(`struct PDESystem\n    k :: Function\n    ∇k :: 
 </div></div>
 
 <div class='org-src-wrapper'>
-<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_26f6cc18f3ea4fbe87327e9d13db71b3>&#10697;</button>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_1640795cf1af418d82240b3789c1c7b4>&#10697;</button>
 <script type='text/javascript'>
-var copyBtnbtn_26f6cc18f3ea4fbe87327e9d13db71b3=document.querySelector('button[name=btn_26f6cc18f3ea4fbe87327e9d13db71b3]');
-copyBtnbtn_26f6cc18f3ea4fbe87327e9d13db71b3.addEventListener('click', function(event) {
-let res = copyTextToClipboard(`end\n`);copyBtnbtn_26f6cc18f3ea4fbe87327e9d13db71b3.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_26f6cc18f3ea4fbe87327e9d13db71b3.innerHTML = '&#10697;'}, 3000);
+var copyBtnbtn_1640795cf1af418d82240b3789c1c7b4=document.querySelector('button[name=btn_1640795cf1af418d82240b3789c1c7b4]');
+copyBtnbtn_1640795cf1af418d82240b3789c1c7b4.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`end\n`);copyBtnbtn_1640795cf1af418d82240b3789c1c7b4.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_1640795cf1af418d82240b3789c1c7b4.innerHTML = '&#10697;'}, 3000);
 });
 </script>
 </div><div class="org-src-container">
@@ -1150,8 +1150,8 @@ let res = copyTextToClipboard(`end\n`);copyBtnbtn_26f6cc18f3ea4fbe87327e9d13db71
 </div></div>
 </div>
 </div>
-<div id="outline-container-orgbf9effb" class="outline-2">
-<h2 id="orgbf9effb"><span class="section-number-2">3.</span> Kernel Implementation</h2>
+<div id="outline-container-org62c5553" class="outline-2">
+<h2 id="org62c5553"><span class="section-number-2">3.</span> Kernel Implementation</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 As kernels we use Radial Basis Kernels (RBF) \(k(x,x') := \phi (\frac{\|x-x'\|}{\gamma})\). That consist of a radial basis function \(\phi \) as well as a scaling factor \(\gamma \)
@@ -1167,26 +1167,26 @@ for a radial basis function \(\phi (r^2) \in  C^2(\RR)\)  and a corresponding RB
 where \(d\) is the dimension of \(x\)
 </p>
 <div class='org-src-wrapper'>
-<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_a0df654f6a954c69bb51648ec7684809>&#10697;</button>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_f66d20043c554a79baa2f02ca40fdcf7>&#10697;</button>
 <script type='text/javascript'>
-var copyBtnbtn_a0df654f6a954c69bb51648ec7684809=document.querySelector('button[name=btn_a0df654f6a954c69bb51648ec7684809]');
-copyBtnbtn_a0df654f6a954c69bb51648ec7684809.addEventListener('click', function(event) {
-let res = copyTextToClipboard(`using StaticArrays\nfunction k(ϕ::Function , γ,x̂::SVector{N} ,x::SVector{N}) where N\n    r = max(1e-15,norm(x-x̂))\n    ϕ(r/γ)\n    end\nfunction ∇k(dϕ::Function , γ ,x̂::SVector{N} ,x::SVector{N}) where N\n    r = max(1e-15,norm(x-x̂))\n    1/γ * (x-x̂)/r*dϕ(r/γ)\n    end\nfunction Δk(d²ϕ::Function,  dϕ::Function , γ ,x̂::SVector{N} ,x::SVector{N}) where N\n    r = max(1e-15,norm(x-x̂))\n    1/γ^2 * d²ϕ(r/γ)  +  1/γ * (N-1)/r *dϕ(r/γ)\n    end\n`);copyBtnbtn_a0df654f6a954c69bb51648ec7684809.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_a0df654f6a954c69bb51648ec7684809.innerHTML = '&#10697;'}, 3000);
+var copyBtnbtn_f66d20043c554a79baa2f02ca40fdcf7=document.querySelector('button[name=btn_f66d20043c554a79baa2f02ca40fdcf7]');
+copyBtnbtn_f66d20043c554a79baa2f02ca40fdcf7.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`using StaticArrays\n@inline function k(ϕ::Function , ::Val{γ},x̂::SVector{N} ,x::SVector{N}) where {N , γ , RBFType}\n    r = max(1e-15,norm(x-x̂)/γ)\n    ϕ(r)\n    end\n@inline function ∇k(dϕ::Function , ::Val{γ} ,x̂::SVector{N} ,x::SVector{N}) where {N , γ , dRBFType}\n    r = max(1e-15,norm(x-x̂)/γ)\n    (x-x̂)*dϕ(r) *  1/(r*γ^2)\n    end\n@inline function Δk(d²ϕ::Function,  dϕ::Function , ::Val{γ} ,x̂::SVector{N} ,x::SVector{N}) where {N , γ , ddRBFType}\n    r = max(1e-15,norm(x-x̂)/γ)\n    1/γ^2 * d²ϕ(r)  +  1/γ^2 * (N-1)/r *dϕ(r)\n    end\n`);copyBtnbtn_f66d20043c554a79baa2f02ca40fdcf7.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_f66d20043c554a79baa2f02ca40fdcf7.innerHTML = '&#10697;'}, 3000);
 });
 </script>
 </div><div class="org-src-container">
 <pre class="src src-julia"><span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> StaticArrays
-<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> <span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">k</span>(&#981;<span style="color: #f0c674;">::Function</span> , &#947;,x&#770;<span style="color: #f0c674;">::SVector</span>{N} ,x<span style="color: #f0c674;">::SVector</span>{N}) <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">where</span> N
-    r = max(<span style="color: #de935f; font-weight: bold;">1e-15</span>,norm(x<span style="color: #f0c674;">-</span>x&#770;))
-    &#981;(r<span style="color: #f0c674;">/</span>&#947;)
+<span style="color: #c5c8c6; font-weight: bold;">@inline</span> <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> <span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">k</span>(&#981;<span style="color: #f0c674;">::Function</span> , <span style="color: #f0c674;">::Val</span>{&#947;},x&#770;<span style="color: #f0c674;">::SVector</span>{N} ,x<span style="color: #f0c674;">::SVector</span>{N}) <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">where</span> {N , &#947; , RBFType}
+    r = max(<span style="color: #de935f; font-weight: bold;">1e-15</span>,norm(x<span style="color: #f0c674;">-</span>x&#770;)<span style="color: #f0c674;">/</span>&#947;)
+    &#981;(r)
     <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
-<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> <span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">&#8711;k</span>(d&#981;<span style="color: #f0c674;">::Function</span> , &#947; ,x&#770;<span style="color: #f0c674;">::SVector</span>{N} ,x<span style="color: #f0c674;">::SVector</span>{N}) <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">where</span> N
-    r = max(<span style="color: #de935f; font-weight: bold;">1e-15</span>,norm(x<span style="color: #f0c674;">-</span>x&#770;))
-    <span style="color: #de935f; font-weight: bold;">1</span><span style="color: #f0c674;">/</span>&#947; <span style="color: #f0c674;">*</span> (x<span style="color: #f0c674;">-</span>x&#770;)<span style="color: #f0c674;">/</span>r<span style="color: #f0c674;">*</span>d&#981;(r<span style="color: #f0c674;">/</span>&#947;)
+<span style="color: #c5c8c6; font-weight: bold;">@inline</span> <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> <span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">&#8711;k</span>(d&#981;<span style="color: #f0c674;">::Function</span> , <span style="color: #f0c674;">::Val</span>{&#947;} ,x&#770;<span style="color: #f0c674;">::SVector</span>{N} ,x<span style="color: #f0c674;">::SVector</span>{N}) <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">where</span> {N , &#947; , dRBFType}
+    r = max(<span style="color: #de935f; font-weight: bold;">1e-15</span>,norm(x<span style="color: #f0c674;">-</span>x&#770;)<span style="color: #f0c674;">/</span>&#947;)
+    (x<span style="color: #f0c674;">-</span>x&#770;)<span style="color: #f0c674;">*</span>d&#981;(r) <span style="color: #f0c674;">*</span>  <span style="color: #de935f; font-weight: bold;">1</span><span style="color: #f0c674;">/</span>(r<span style="color: #f0c674;">*</span>&#947;<span style="color: #f0c674;">^</span><span style="color: #de935f; font-weight: bold;">2</span>)
     <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
-<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> <span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">&#916;k</span>(d&#178;&#981;<span style="color: #f0c674;">::Function</span>,  d&#981;<span style="color: #f0c674;">::Function</span> , &#947; ,x&#770;<span style="color: #f0c674;">::SVector</span>{N} ,x<span style="color: #f0c674;">::SVector</span>{N}) <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">where</span> N
-    r = max(<span style="color: #de935f; font-weight: bold;">1e-15</span>,norm(x<span style="color: #f0c674;">-</span>x&#770;))
-    <span style="color: #de935f; font-weight: bold;">1</span><span style="color: #f0c674;">/</span>&#947;<span style="color: #f0c674;">^</span><span style="color: #de935f; font-weight: bold;">2</span> <span style="color: #f0c674;">*</span> d&#178;&#981;(r<span style="color: #f0c674;">/</span>&#947;)  <span style="color: #f0c674;">+</span>  <span style="color: #de935f; font-weight: bold;">1</span><span style="color: #f0c674;">/</span>&#947; <span style="color: #f0c674;">*</span> (N<span style="color: #f0c674;">-</span><span style="color: #de935f; font-weight: bold;">1</span>)<span style="color: #f0c674;">/</span>r <span style="color: #f0c674;">*</span>d&#981;(r<span style="color: #f0c674;">/</span>&#947;)
+<span style="color: #c5c8c6; font-weight: bold;">@inline</span> <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> <span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">&#916;k</span>(d&#178;&#981;<span style="color: #f0c674;">::Function</span>,  d&#981;<span style="color: #f0c674;">::Function</span> , <span style="color: #f0c674;">::Val</span>{&#947;} ,x&#770;<span style="color: #f0c674;">::SVector</span>{N} ,x<span style="color: #f0c674;">::SVector</span>{N}) <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">where</span> {N , &#947; , ddRBFType}
+    r = max(<span style="color: #de935f; font-weight: bold;">1e-15</span>,norm(x<span style="color: #f0c674;">-</span>x&#770;)<span style="color: #f0c674;">/</span>&#947;)
+    <span style="color: #de935f; font-weight: bold;">1</span><span style="color: #f0c674;">/</span>&#947;<span style="color: #f0c674;">^</span><span style="color: #de935f; font-weight: bold;">2</span> <span style="color: #f0c674;">*</span> d&#178;&#981;(r)  <span style="color: #f0c674;">+</span>  <span style="color: #de935f; font-weight: bold;">1</span><span style="color: #f0c674;">/</span>&#947;<span style="color: #f0c674;">^</span><span style="color: #de935f; font-weight: bold;">2</span> <span style="color: #f0c674;">*</span> (N<span style="color: #f0c674;">-</span><span style="color: #de935f; font-weight: bold;">1</span>)<span style="color: #f0c674;">/</span>r <span style="color: #f0c674;">*</span>d&#981;(r)
     <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
 </pre>
 </div></div>
@@ -1195,8 +1195,8 @@ let res = copyTextToClipboard(`using StaticArrays\nfunction k(ϕ::Function , γ,
 Δk (generic function with 1 method)
 </pre>
 </div>
-<div id="outline-container-org027e23e" class="outline-3">
-<h3 id="org027e23e"><span class="section-number-3">3.1.</span> squared rbf</h3>
+<div id="outline-container-orgca437c0" class="outline-3">
+<h3 id="orgca437c0"><span class="section-number-3">3.1.</span> squared rbf</h3>
 <div class="outline-text-3" id="text-3-1">
 <p>
 for a squared RBF the kernels are simpler. and non singular
@@ -1207,26 +1207,27 @@ for a squared RBF the kernels are simpler. and non singular
 \Delta_x k(x',x) &= \frac{1}{\gamma } (4 * \frac{r^2}{\gamma^2} \phi''\left(\frac{r^2}{\gamma}\right) + 2d\phi'\left(\frac{r^2}{\gamma}\right))
 \end{align}
 <div class='org-src-wrapper'>
-<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_6e5bb11c264e41e7ba9118f01df2195a>&#10697;</button>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_78c9bb98e2fe4cb7a145ae2c5469fc1b>&#10697;</button>
 <script type='text/javascript'>
-var copyBtnbtn_6e5bb11c264e41e7ba9118f01df2195a=document.querySelector('button[name=btn_6e5bb11c264e41e7ba9118f01df2195a]');
-copyBtnbtn_6e5bb11c264e41e7ba9118f01df2195a.addEventListener('click', function(event) {
-let res = copyTextToClipboard(`using StaticArrays\nfunction ksq(ϕ::Function , γ,x̂::SVector{N} ,x::SVector{N}) where N\n    r = dot(x-x̂,x-x̂)\n    ϕ(r/γ)\n    end\nfunction ∇ksq(dϕ::Function , γ ,x̂::SVector{N} ,x::SVector{N}) where N\n    r = dot(x-x̂,x-x̂)\n    2/γ*(x-x̂)*dϕ(r/γ)\n    end\nfunction Δksq(d²ϕ::Function,  dϕ::Function , γ ,x̂::SVector{N} ,x::SVector{N}) where N\n    r = dot(x-x̂,x-x̂)\n     (4*r/γ^2 * d²ϕ(r/γ)  +  2/γ *N*dϕ(r/γ))\n    end\n`);copyBtnbtn_6e5bb11c264e41e7ba9118f01df2195a.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_6e5bb11c264e41e7ba9118f01df2195a.innerHTML = '&#10697;'}, 3000);
+var copyBtnbtn_78c9bb98e2fe4cb7a145ae2c5469fc1b=document.querySelector('button[name=btn_78c9bb98e2fe4cb7a145ae2c5469fc1b]');
+copyBtnbtn_78c9bb98e2fe4cb7a145ae2c5469fc1b.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`using StaticArrays\nusing LinearAlgebra\n@inline function ksq(ϕ::RBFType , ::Val{γ},x̂::SVector{N} ,x::SVector{N}) where {N , γ , RBFType}\n    r = dot(x-x̂,x-x̂)/γ^2\n    ϕ(r)\n    end\n@inline function ∇ksq(dϕ::dRBFType , ::Val{γ} ,x̂::SVector{N} ,x::SVector{N}) where {N , γ , dRBFType}\n    r = dot(x-x̂,x-x̂)/γ^2\n    2/γ^2*(x-x̂)*dϕ(r)\n    end\n@inline function Δksq(d²ϕ::ddRBFType,  dϕ::Function , ::Val{γ} ,x̂::SVector{N} ,x::SVector{N}) where {N , γ , ddRBFType}\n    r = dot(x-x̂,x-x̂)/γ^2\n    1/γ^2 * (4*r * d²ϕ(r)  +  2*N*dϕ(r))\n    end\n`);copyBtnbtn_78c9bb98e2fe4cb7a145ae2c5469fc1b.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_78c9bb98e2fe4cb7a145ae2c5469fc1b.innerHTML = '&#10697;'}, 3000);
 });
 </script>
 </div><div class="org-src-container">
 <pre class="src src-julia"><span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> StaticArrays
-<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> <span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">ksq</span>(&#981;<span style="color: #f0c674;">::Function</span> , &#947;,x&#770;<span style="color: #f0c674;">::SVector</span>{N} ,x<span style="color: #f0c674;">::SVector</span>{N}) <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">where</span> N
-    r = dot(x<span style="color: #f0c674;">-</span>x&#770;,x<span style="color: #f0c674;">-</span>x&#770;)
-    &#981;(r<span style="color: #f0c674;">/</span>&#947;)
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> LinearAlgebra
+<span style="color: #c5c8c6; font-weight: bold;">@inline</span> <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> <span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">ksq</span>(&#981;<span style="color: #f0c674;">::RBFType</span> , <span style="color: #f0c674;">::Val</span>{&#947;},x&#770;<span style="color: #f0c674;">::SVector</span>{N} ,x<span style="color: #f0c674;">::SVector</span>{N}) <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">where</span> {N , &#947; , RBFType}
+    r = dot(x<span style="color: #f0c674;">-</span>x&#770;,x<span style="color: #f0c674;">-</span>x&#770;)<span style="color: #f0c674;">/</span>&#947;<span style="color: #f0c674;">^</span><span style="color: #de935f; font-weight: bold;">2</span>
+    &#981;(r)
     <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
-<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> <span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">&#8711;ksq</span>(d&#981;<span style="color: #f0c674;">::Function</span> , &#947; ,x&#770;<span style="color: #f0c674;">::SVector</span>{N} ,x<span style="color: #f0c674;">::SVector</span>{N}) <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">where</span> N
-    r = dot(x<span style="color: #f0c674;">-</span>x&#770;,x<span style="color: #f0c674;">-</span>x&#770;)
-    <span style="color: #de935f; font-weight: bold;">2</span><span style="color: #f0c674;">/</span>&#947;<span style="color: #f0c674;">*</span>(x<span style="color: #f0c674;">-</span>x&#770;)<span style="color: #f0c674;">*</span>d&#981;(r<span style="color: #f0c674;">/</span>&#947;)
+<span style="color: #c5c8c6; font-weight: bold;">@inline</span> <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> <span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">&#8711;ksq</span>(d&#981;<span style="color: #f0c674;">::dRBFType</span> , <span style="color: #f0c674;">::Val</span>{&#947;} ,x&#770;<span style="color: #f0c674;">::SVector</span>{N} ,x<span style="color: #f0c674;">::SVector</span>{N}) <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">where</span> {N , &#947; , dRBFType}
+    r = dot(x<span style="color: #f0c674;">-</span>x&#770;,x<span style="color: #f0c674;">-</span>x&#770;)<span style="color: #f0c674;">/</span>&#947;<span style="color: #f0c674;">^</span><span style="color: #de935f; font-weight: bold;">2</span>
+    <span style="color: #de935f; font-weight: bold;">2</span><span style="color: #f0c674;">/</span>&#947;<span style="color: #f0c674;">^</span><span style="color: #de935f; font-weight: bold;">2</span><span style="color: #f0c674;">*</span>(x<span style="color: #f0c674;">-</span>x&#770;)<span style="color: #f0c674;">*</span>d&#981;(r)
     <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
-<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> <span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">&#916;ksq</span>(d&#178;&#981;<span style="color: #f0c674;">::Function</span>,  d&#981;<span style="color: #f0c674;">::Function</span> , &#947; ,x&#770;<span style="color: #f0c674;">::SVector</span>{N} ,x<span style="color: #f0c674;">::SVector</span>{N}) <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">where</span> N
-    r = dot(x<span style="color: #f0c674;">-</span>x&#770;,x<span style="color: #f0c674;">-</span>x&#770;)
-     (<span style="color: #de935f; font-weight: bold;">4</span><span style="color: #f0c674;">*</span>r<span style="color: #f0c674;">/</span>&#947;<span style="color: #f0c674;">^</span><span style="color: #de935f; font-weight: bold;">2</span> <span style="color: #f0c674;">*</span> d&#178;&#981;(r<span style="color: #f0c674;">/</span>&#947;)  <span style="color: #f0c674;">+</span>  <span style="color: #de935f; font-weight: bold;">2</span><span style="color: #f0c674;">/</span>&#947; <span style="color: #f0c674;">*</span>N<span style="color: #f0c674;">*</span>d&#981;(r<span style="color: #f0c674;">/</span>&#947;))
+<span style="color: #c5c8c6; font-weight: bold;">@inline</span> <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> <span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">&#916;ksq</span>(d&#178;&#981;<span style="color: #f0c674;">::ddRBFType</span>,  d&#981;<span style="color: #f0c674;">::Function</span> , <span style="color: #f0c674;">::Val</span>{&#947;} ,x&#770;<span style="color: #f0c674;">::SVector</span>{N} ,x<span style="color: #f0c674;">::SVector</span>{N}) <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">where</span> {N , &#947; , ddRBFType}
+    r = dot(x<span style="color: #f0c674;">-</span>x&#770;,x<span style="color: #f0c674;">-</span>x&#770;)<span style="color: #f0c674;">/</span>&#947;<span style="color: #f0c674;">^</span><span style="color: #de935f; font-weight: bold;">2</span>
+    <span style="color: #de935f; font-weight: bold;">1</span><span style="color: #f0c674;">/</span>&#947;<span style="color: #f0c674;">^</span><span style="color: #de935f; font-weight: bold;">2</span> <span style="color: #f0c674;">*</span> (<span style="color: #de935f; font-weight: bold;">4</span><span style="color: #f0c674;">*</span>r <span style="color: #f0c674;">*</span> d&#178;&#981;(r)  <span style="color: #f0c674;">+</span>  <span style="color: #de935f; font-weight: bold;">2</span><span style="color: #f0c674;">*</span>N<span style="color: #f0c674;">*</span>d&#981;(r))
     <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
 </pre>
 </div></div>
@@ -1236,26 +1237,26 @@ let res = copyTextToClipboard(`using StaticArrays\nfunction ksq(ϕ::Function , �
 </pre>
 </div>
 </div>
-<div id="outline-container-orgeb13cec" class="outline-3">
-<h3 id="orgeb13cec"><span class="section-number-3">3.2.</span> Gauss</h3>
+<div id="outline-container-orgb9a375d" class="outline-3">
+<h3 id="orgb9a375d"><span class="section-number-3">3.2.</span> Gauss</h3>
 <div class="outline-text-3" id="text-3-2">
 <div class='org-src-wrapper'>
-<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_c5beaf3f32c74aa6b6e85bd675363748>&#10697;</button>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_512a63429c6e469f93cef3d7922be660>&#10697;</button>
 <script type='text/javascript'>
-var copyBtnbtn_c5beaf3f32c74aa6b6e85bd675363748=document.querySelector('button[name=btn_c5beaf3f32c74aa6b6e85bd675363748]');
-copyBtnbtn_c5beaf3f32c74aa6b6e85bd675363748.addEventListener('click', function(event) {
-let res = copyTextToClipboard(`using StaticArrays\nfunction rbf_gaussian(r)\n    exp(-r)\n    end\nfunction d_rbf_gaussian(r)\n    -exp(-r)\n    end\nfunction dd_rbf_gaussian(r)\n    exp(-r)\n    end\n`);copyBtnbtn_c5beaf3f32c74aa6b6e85bd675363748.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_c5beaf3f32c74aa6b6e85bd675363748.innerHTML = '&#10697;'}, 3000);
+var copyBtnbtn_512a63429c6e469f93cef3d7922be660=document.querySelector('button[name=btn_512a63429c6e469f93cef3d7922be660]');
+copyBtnbtn_512a63429c6e469f93cef3d7922be660.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`using StaticArrays\n@inline function rbf_gaussian(r)\n    exp(-r)\n    end\n@inline function d_rbf_gaussian(r)\n    -exp(-r)\n    end\n@inline function dd_rbf_gaussian(r)\n    exp(-r)\n    end\n`);copyBtnbtn_512a63429c6e469f93cef3d7922be660.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_512a63429c6e469f93cef3d7922be660.innerHTML = '&#10697;'}, 3000);
 });
 </script>
 </div><div class="org-src-container">
 <pre class="src src-julia"><span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> StaticArrays
-<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> <span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">rbf_gaussian</span>(r)
+<span style="color: #c5c8c6; font-weight: bold;">@inline</span> <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> <span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">rbf_gaussian</span>(r)
     exp(<span style="color: #f0c674;">-</span>r)
     <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
-<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> <span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">d_rbf_gaussian</span>(r)
+<span style="color: #c5c8c6; font-weight: bold;">@inline</span> <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> <span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">d_rbf_gaussian</span>(r)
     <span style="color: #f0c674;">-</span>exp(<span style="color: #f0c674;">-</span>r)
     <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
-<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> <span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">dd_rbf_gaussian</span>(r)
+<span style="color: #c5c8c6; font-weight: bold;">@inline</span> <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> <span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">dd_rbf_gaussian</span>(r)
     exp(<span style="color: #f0c674;">-</span>r)
     <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
 </pre>
@@ -1267,11 +1268,11 @@ dd_rbf_gaussian (generic function with 1 method)
 
 
 <div class='org-src-wrapper'>
-<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_51429ff449c64b7b95040ec57b9cc160>&#10697;</button>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_4abd64fd87674c989325c7ba9d3de680>&#10697;</button>
 <script type='text/javascript'>
-var copyBtnbtn_51429ff449c64b7b95040ec57b9cc160=document.querySelector('button[name=btn_51429ff449c64b7b95040ec57b9cc160]');
-copyBtnbtn_51429ff449c64b7b95040ec57b9cc160.addEventListener('click', function(event) {
-let res = copyTextToClipboard(`using GLMakie\nX = range(-2 , 2 , 100)\nY = range(-5 , 5 , 100)\nusing LinearAlgebra\n\nfig = Figure()\nax = Axis(fig[1,1])\nlines!(X , x->rbf_gaussian(x^2))\nsave(\"images/gauss-rbf.png\",fig )\n`);copyBtnbtn_51429ff449c64b7b95040ec57b9cc160.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_51429ff449c64b7b95040ec57b9cc160.innerHTML = '&#10697;'}, 3000);
+var copyBtnbtn_4abd64fd87674c989325c7ba9d3de680=document.querySelector('button[name=btn_4abd64fd87674c989325c7ba9d3de680]');
+copyBtnbtn_4abd64fd87674c989325c7ba9d3de680.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`using GLMakie\nX = range(-2 , 2 , 100)\nY = range(-5 , 5 , 100)\nusing LinearAlgebra\n\nfig = Figure()\nax = Axis(fig[1,1])\nlines!(X , x->rbf_gaussian(x^2))\nsave(\"images/gauss-rbf.png\",fig )\n`);copyBtnbtn_4abd64fd87674c989325c7ba9d3de680.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_4abd64fd87674c989325c7ba9d3de680.innerHTML = '&#10697;'}, 3000);
 });
 </script>
 </div><div class="org-src-container">
@@ -1288,24 +1289,24 @@ save(<span style="color: var(--clr-string); background-color: var(--bg-string);"
 </div></div>
 
 
-<div id="org5aea3d2" class="figure">
+<div id="org76d9811" class="figure">
 <p><img src="images/gauss-rbf.png" alt="gauss-rbf.png" />
 </p>
 </div>
 </div>
 </div>
-<div id="outline-container-orgbc01b85" class="outline-3">
-<h3 id="orgbc01b85"><span class="section-number-3">3.3.</span> Cardinal B<sub>3</sub> Spline</h3>
+<div id="outline-container-orgf6f1b44" class="outline-3">
+<h3 id="orgf6f1b44"><span class="section-number-3">3.3.</span> Cardinal B<sub>3</sub> Spline</h3>
 <div class="outline-text-3" id="text-3-3">
 \begin{align*}
 B_{d}(r) = \sum_{n=0}^4 \frac{(-1)^n}{d!} \binom{d+1}{n} \left( r + \frac{d+1}{2}-n \right)^d_+
 \end{align*}
 <div class='org-src-wrapper'>
-<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_ef927186c444463982e5f609e8468e91>&#10697;</button>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_53d23f655b9d4fddba4053fc0765aeeb>&#10697;</button>
 <script type='text/javascript'>
-var copyBtnbtn_ef927186c444463982e5f609e8468e91=document.querySelector('button[name=btn_ef927186c444463982e5f609e8468e91]');
-copyBtnbtn_ef927186c444463982e5f609e8468e91.addEventListener('click', function(event) {
-let res = copyTextToClipboard(`function B_3(r)\nr_prime = r+2\n    return 1/24 * (\n    1 *max(0, (r_prime - 0))^3\n    -4*max(0, (r_prime - 1))^3\n    +6*max(0, (r_prime - 2))^3\n    -4*max(0, (r_prime - 3))^3\n    +1*max(0, (r_prime - 4))^3\n    )\nend\nfunction d_B_3(r)\nr_prime = r+2\n    return 1/8 * (\n    1 *max(0, (r_prime - 0))^2\n    -4*max(0, (r_prime - 1))^2\n    +6*max(0, (r_prime - 2))^2\n    -4*max(0, (r_prime - 3))^2\n    +1*max(0, (r_prime - 4))^2\n    )\nend\nfunction dd_B_3(r)\nr_prime = r+2\n    return 1/4 * (\n    1 *max(0, (r_prime - 0))\n    -4*max(0, (r_prime - 1))\n    +6*max(0, (r_prime - 2))\n    -4*max(0, (r_prime - 3))\n    +1*max(0, (r_prime - 4))\n    )\nend\n\n`);copyBtnbtn_ef927186c444463982e5f609e8468e91.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_ef927186c444463982e5f609e8468e91.innerHTML = '&#10697;'}, 3000);
+var copyBtnbtn_53d23f655b9d4fddba4053fc0765aeeb=document.querySelector('button[name=btn_53d23f655b9d4fddba4053fc0765aeeb]');
+copyBtnbtn_53d23f655b9d4fddba4053fc0765aeeb.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`function B_3(r)\nr_prime = r+2\n    return 1/24 * (\n    1 *max(0, (r_prime - 0))^3\n    -4*max(0, (r_prime - 1))^3\n    +6*max(0, (r_prime - 2))^3\n    -4*max(0, (r_prime - 3))^3\n    +1*max(0, (r_prime - 4))^3\n    )\nend\nfunction d_B_3(r)\nr_prime = r+2\n    return 1/8 * (\n    1 *max(0, (r_prime - 0))^2\n    -4*max(0, (r_prime - 1))^2\n    +6*max(0, (r_prime - 2))^2\n    -4*max(0, (r_prime - 3))^2\n    +1*max(0, (r_prime - 4))^2\n    )\nend\nfunction dd_B_3(r)\nr_prime = r+2\n    return 1/4 * (\n    1 *max(0, (r_prime - 0))\n    -4*max(0, (r_prime - 1))\n    +6*max(0, (r_prime - 2))\n    -4*max(0, (r_prime - 3))\n    +1*max(0, (r_prime - 4))\n    )\nend\n\n`);copyBtnbtn_53d23f655b9d4fddba4053fc0765aeeb.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_53d23f655b9d4fddba4053fc0765aeeb.innerHTML = '&#10697;'}, 3000);
 });
 </script>
 </div><div class="org-src-container">
@@ -1344,15 +1345,15 @@ r_prime = r<span style="color: #f0c674;">+</span><span style="color: #de935f; fo
 </div></div>
 
 <div class='org-src-wrapper'>
-<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_bbe4db354aa944b68e0ce4adc2939ce3>&#10697;</button>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_a01758a2aa8e439fa221860cd14daef7>&#10697;</button>
 <script type='text/javascript'>
-var copyBtnbtn_bbe4db354aa944b68e0ce4adc2939ce3=document.querySelector('button[name=btn_bbe4db354aa944b68e0ce4adc2939ce3]');
-copyBtnbtn_bbe4db354aa944b68e0ce4adc2939ce3.addEventListener('click', function(event) {
-let res = copyTextToClipboard(`using GLMakie\nusing LaTeXStrings\nX = range(-2 , 2 , 100)\nY = range(-2 , 2 , 100)\n\nfig = Figure()\nax = Axis(fig[1,1])\n\nlines!(ax , X , B_3 , label=L\"B_3\")\nlines!(ax , X , d_B_3 , label=L\"\\partial B_3\")\nlines!(ax , X , dd_B_3 , label=L\"\\partial^2 B_3\")\naxislegend(ax)\nsave(\"images/b-spline.png\",fig )\n`);copyBtnbtn_bbe4db354aa944b68e0ce4adc2939ce3.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_bbe4db354aa944b68e0ce4adc2939ce3.innerHTML = '&#10697;'}, 3000);
+var copyBtnbtn_a01758a2aa8e439fa221860cd14daef7=document.querySelector('button[name=btn_a01758a2aa8e439fa221860cd14daef7]');
+copyBtnbtn_a01758a2aa8e439fa221860cd14daef7.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`using GLMakie\nusing LaTeXStrings\nX = range(-2 , 2 , 100)\nY = range(-2 , 2 , 100)\n\nfig = Figure()\nax = Axis(fig[1,1])\n\nlines!(ax , X , B_3 , label=L\"B_3\")\nlines!(ax , X , d_B_3 , label=L\"\\partial B_3\")\nlines!(ax , X , dd_B_3 , label=L\"\\partial^2 B_3\")\naxislegend(ax)\nsave(\"images/b-spline.png\",fig )\n`);copyBtnbtn_a01758a2aa8e439fa221860cd14daef7.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_a01758a2aa8e439fa221860cd14daef7.innerHTML = '&#10697;'}, 3000);
 });
 </script>
 </div><div class="org-src-container">
-<pre class="src src-julia" id="org9655a91"><span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> GLMakie
+<pre class="src src-julia" id="org91c5e04"><span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> GLMakie
 <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> LaTeXStrings
 X = range(<span style="color: #f0c674;">-</span><span style="color: #de935f; font-weight: bold;">2</span> , <span style="color: #de935f; font-weight: bold;">2</span> , <span style="color: #de935f; font-weight: bold;">100</span>)
 Y = range(<span style="color: #f0c674;">-</span><span style="color: #de935f; font-weight: bold;">2</span> , <span style="color: #de935f; font-weight: bold;">2</span> , <span style="color: #de935f; font-weight: bold;">100</span>)
@@ -1369,25 +1370,25 @@ save(<span style="color: var(--clr-string); background-color: var(--bg-string);"
 </div></div>
 
 
-<div id="orgfe138b8" class="figure">
+<div id="orgfda88c3" class="figure">
 <p><img src="images/b-spline.png" alt="b-spline.png" />
 </p>
 </div>
 </div>
 </div>
-<div id="outline-container-org1fe51bf" class="outline-3">
-<h3 id="org1fe51bf"><span class="section-number-3">3.4.</span> Thin Plate</h3>
+<div id="outline-container-orga2d629b" class="outline-3">
+<h3 id="orga2d629b"><span class="section-number-3">3.4.</span> Thin Plate</h3>
 <div class="outline-text-3" id="text-3-4">
 \begin{align*}
 T(r^2) &= \frac{1}{2}r\ln{r} \\
 T(r) &= r^2\ln{r}
 \end{align*}
 <div class='org-src-wrapper'>
-<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_c9be7980b9f14b779a6247dd46c0ec5b>&#10697;</button>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_93b7e63beca54092b09601a5c917e3b6>&#10697;</button>
 <script type='text/javascript'>
-var copyBtnbtn_c9be7980b9f14b779a6247dd46c0ec5b=document.querySelector('button[name=btn_c9be7980b9f14b779a6247dd46c0ec5b]');
-copyBtnbtn_c9be7980b9f14b779a6247dd46c0ec5b.addEventListener('click', function(event) {
-let res = copyTextToClipboard(`function thin_plate(r)\n    r == 0.0 && return 0.0\n    return 0.5* r *  log(r)\nend\n\nfunction d_thin_plate(r)\n    r == 0.0 && return 0.0\n    return 0.5 * log(r) + 1\nend\n\nfunction dd_thin_plate(r)\n    r == 0.0 && return 0.0\n    return 0.5 * 1/r\nend\n`);copyBtnbtn_c9be7980b9f14b779a6247dd46c0ec5b.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_c9be7980b9f14b779a6247dd46c0ec5b.innerHTML = '&#10697;'}, 3000);
+var copyBtnbtn_93b7e63beca54092b09601a5c917e3b6=document.querySelector('button[name=btn_93b7e63beca54092b09601a5c917e3b6]');
+copyBtnbtn_93b7e63beca54092b09601a5c917e3b6.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`function thin_plate(r)\n    r == 0.0 && return 0.0\n    return 0.5* r *  log(r)\nend\n\nfunction d_thin_plate(r)\n    r == 0.0 && return 0.0\n    return 0.5 * log(r) + 1\nend\n\nfunction dd_thin_plate(r)\n    r == 0.0 && return 0.0\n    return 0.5 * 1/r\nend\n`);copyBtnbtn_93b7e63beca54092b09601a5c917e3b6.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_93b7e63beca54092b09601a5c917e3b6.innerHTML = '&#10697;'}, 3000);
 });
 </script>
 </div><div class="org-src-container">
@@ -1414,15 +1415,15 @@ dd_thin_plate (generic function with 1 method)
 
 
 <div class='org-src-wrapper'>
-<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_021c39b2436048a6b3e38196bf8ed5b4>&#10697;</button>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_c7a7278010294dbfbb5aa01a30d3596b>&#10697;</button>
 <script type='text/javascript'>
-var copyBtnbtn_021c39b2436048a6b3e38196bf8ed5b4=document.querySelector('button[name=btn_021c39b2436048a6b3e38196bf8ed5b4]');
-copyBtnbtn_021c39b2436048a6b3e38196bf8ed5b4.addEventListener('click', function(event) {
-let res = copyTextToClipboard(`using GLMakie\nX = range(0 , 1 , 100)\nY = range(-5 , 5 , 100)\n\nfig = Figure()\nax = Axis(fig[1,1])\n\nlines!(ax , X , thin_plate)\n\nsave(\"images/plate-spline.png\",fig )\n`);copyBtnbtn_021c39b2436048a6b3e38196bf8ed5b4.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_021c39b2436048a6b3e38196bf8ed5b4.innerHTML = '&#10697;'}, 3000);
+var copyBtnbtn_c7a7278010294dbfbb5aa01a30d3596b=document.querySelector('button[name=btn_c7a7278010294dbfbb5aa01a30d3596b]');
+copyBtnbtn_c7a7278010294dbfbb5aa01a30d3596b.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`using GLMakie\nX = range(0 , 1 , 100)\nY = range(-5 , 5 , 100)\n\nfig = Figure()\nax = Axis(fig[1,1])\n\nlines!(ax , X , thin_plate)\n\nsave(\"images/plate-spline.png\",fig )\n`);copyBtnbtn_c7a7278010294dbfbb5aa01a30d3596b.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_c7a7278010294dbfbb5aa01a30d3596b.innerHTML = '&#10697;'}, 3000);
 });
 </script>
 </div><div class="org-src-container">
-<pre class="src src-julia" id="orgdc7ecff"><span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> GLMakie
+<pre class="src src-julia" id="orgaeae7d4"><span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> GLMakie
 X = range(<span style="color: #de935f; font-weight: bold;">0</span> , <span style="color: #de935f; font-weight: bold;">1</span> , <span style="color: #de935f; font-weight: bold;">100</span>)
 Y = range(<span style="color: #f0c674;">-</span><span style="color: #de935f; font-weight: bold;">5</span> , <span style="color: #de935f; font-weight: bold;">5</span> , <span style="color: #de935f; font-weight: bold;">100</span>)
 
@@ -1436,26 +1437,27 @@ save(<span style="color: var(--clr-string); background-color: var(--bg-string);"
 </div></div>
 
 
-<div id="org4841e05" class="figure">
+<div id="org86c2bd7" class="figure">
 <p><img src="images/plate-spline.png" alt="plate-spline.png" />
 </p>
 </div>
 </div>
 </div>
 </div>
-<div id="outline-container-orgdad46ec" class="outline-2">
-<h2 id="orgdad46ec"><span class="section-number-2">4.</span> PDE</h2>
+<div id="outline-container-org223c809" class="outline-2">
+<h2 id="org223c809"><span class="section-number-2">4.</span> PDE</h2>
 <div class="outline-text-2" id="text-4">
 <div class='org-src-wrapper'>
-<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_71f7c8b751844350bd61983b759f1c4b>&#10697;</button>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_d4596e17b289460f9dc870c8e374bb1a>&#10697;</button>
 <script type='text/javascript'>
-var copyBtnbtn_71f7c8b751844350bd61983b759f1c4b=document.querySelector('button[name=btn_71f7c8b751844350bd61983b759f1c4b]');
-copyBtnbtn_71f7c8b751844350bd61983b759f1c4b.addEventListener('click', function(event) {
-let res = copyTextToClipboard(`using Revise\nincludet(\"src/pdesolver.jl\")\nincludet(\"src/domains.jl\")\nusing .PDESolvers\nusing .Domains\n`);copyBtnbtn_71f7c8b751844350bd61983b759f1c4b.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_71f7c8b751844350bd61983b759f1c4b.innerHTML = '&#10697;'}, 3000);
+var copyBtnbtn_d4596e17b289460f9dc870c8e374bb1a=document.querySelector('button[name=btn_d4596e17b289460f9dc870c8e374bb1a]');
+copyBtnbtn_d4596e17b289460f9dc870c8e374bb1a.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`using Revise\nusing LinearAlgebra\nincludet(\"src/pdesolver.jl\")\nincludet(\"src/domains.jl\")\nusing .PDESolvers\nusing .Domains\n`);copyBtnbtn_d4596e17b289460f9dc870c8e374bb1a.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_d4596e17b289460f9dc870c8e374bb1a.innerHTML = '&#10697;'}, 3000);
 });
 </script>
 </div><div class="org-src-container">
 <pre class="src src-julia"><span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> Revise
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> LinearAlgebra
 includet(<span style="color: var(--clr-string); background-color: var(--bg-string);">"src/pdesolver.jl"</span>)
 includet(<span style="color: var(--clr-string); background-color: var(--bg-string);">"src/domains.jl"</span>)
 <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> .PDESolvers
@@ -1463,8 +1465,8 @@ includet(<span style="color: var(--clr-string); background-color: var(--bg-strin
 </pre>
 </div></div>
 </div>
-<div id="outline-container-org18a7f83" class="outline-3">
-<h3 id="org18a7f83"><span class="section-number-3">4.1.</span> PDE Poisson</h3>
+<div id="outline-container-org3472276" class="outline-3">
+<h3 id="org3472276"><span class="section-number-3">4.1.</span> PDE Poisson</h3>
 <div class="outline-text-3" id="text-4-1">
 <p>
 with \(a(x) = 1 , g_{D}(x) = 0\) and \(\Gamma_{N} = \emptyset \) this method is able to model the poisson equation
@@ -1475,11 +1477,11 @@ with \(a(x) = 1 , g_{D}(x) = 0\) and \(\Gamma_{N} = \emptyset \) this method is 
 u(x) &= 0 & \text{on} \quad  \Gamma_D
 \end{align}
 <div class='org-src-wrapper'>
-<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_c8b4dabcc25a4eb6a599dc8a5d24f29f>&#10697;</button>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_717063ce858d40eca2baa683a7b7f960>&#10697;</button>
 <script type='text/javascript'>
-var copyBtnbtn_c8b4dabcc25a4eb6a599dc8a5d24f29f=document.querySelector('button[name=btn_c8b4dabcc25a4eb6a599dc8a5d24f29f]');
-copyBtnbtn_c8b4dabcc25a4eb6a599dc8a5d24f29f.addEventListener('click', function(event) {
-let res = copyTextToClipboard(`using StaticArrays\nfunction domain(x::SVector{2})\n    return sdf_square(x , 0.5 , SVector(0.5,0.5))\nend\nfunction ∇domain(x::SVector{2})\n    return sdf_square_grad(x , 0.5 , SVector(0.5,0.5))\nend\nfunction sdf_β(x::SVector{2})\n    return sdf_square(x , 0. , SVector(-1.,-1) )\nend\n\na(x::SVector{2}) = 1\n∇a(x::SVector{2}) = SVector{2}(0.,0.)\nf(x::SVector{2}) =2 * (x[1]+x[2] - x[1]^2 - x[2]^2)\ng_D(x::SVector{2})= 0\ng_N(x::SVector{2} , n::SVector{2}) = 0\n`);copyBtnbtn_c8b4dabcc25a4eb6a599dc8a5d24f29f.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_c8b4dabcc25a4eb6a599dc8a5d24f29f.innerHTML = '&#10697;'}, 3000);
+var copyBtnbtn_717063ce858d40eca2baa683a7b7f960=document.querySelector('button[name=btn_717063ce858d40eca2baa683a7b7f960]');
+copyBtnbtn_717063ce858d40eca2baa683a7b7f960.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`using StaticArrays\nfunction domain(x::SVector{2})\n    return sdf_square(x , 0.5 , SVector(0.5,0.5))\nend\nfunction ∇domain(x::SVector{2})\n    return sdf_square_grad(x , 0.5 , SVector(0.5,0.5))\nend\nfunction sdf_β(x::SVector{2})\n    return sdf_square(x , 0. , SVector(-1.,-1) )\nend\n\na(x::SVector{2}) = 1\n∇a(x::SVector{2}) = SVector{2}(0.,0.)\nf(x::SVector{2}) =2 * (x[1]+x[2] - x[1]^2 - x[2]^2)\ng_D(x::SVector{2})= 0\ng_N(x::SVector{2} , n::SVector{2}) = 0\n`);copyBtnbtn_717063ce858d40eca2baa683a7b7f960.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_717063ce858d40eca2baa683a7b7f960.innerHTML = '&#10697;'}, 3000);
 });
 </script>
 </div><div class="org-src-container">
@@ -1503,58 +1505,64 @@ let res = copyTextToClipboard(`using StaticArrays\nfunction domain(x::SVector{2}
 </div></div>
 
 <div class='org-src-wrapper'>
-<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_f188b0eff24749f2bae2acbaf357ed4f>&#10697;</button>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_6cd7af1dcd4c4c53b61997b8e46e88e3>&#10697;</button>
 <script type='text/javascript'>
-var copyBtnbtn_f188b0eff24749f2bae2acbaf357ed4f=document.querySelector('button[name=btn_f188b0eff24749f2bae2acbaf357ed4f]');
-copyBtnbtn_f188b0eff24749f2bae2acbaf357ed4f.addEventListener('click', function(event) {
-let res = copyTextToClipboard(`X = range(0 , 1 , 100)\nY = range(0 , 1 , 100)\nX_col = [ [x,y] for x in X , y in Y]\nX_col = reduce(vcat ,X_col )\nX_col = reshape(X_col, 2,:)\nX_t = range(0 , 1 , 100)\nY_t = range(0 , 1 , 100)\nX_test = [ [x,y] for x in X_t , y in Y_t]\nX_test = reduce(vcat , X_test)\nX_test = reshape(X_test, 2,:)\nsize(X_col)\n`);copyBtnbtn_f188b0eff24749f2bae2acbaf357ed4f.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_f188b0eff24749f2bae2acbaf357ed4f.innerHTML = '&#10697;'}, 3000);
+var copyBtnbtn_6cd7af1dcd4c4c53b61997b8e46e88e3=document.querySelector('button[name=btn_6cd7af1dcd4c4c53b61997b8e46e88e3]');
+copyBtnbtn_6cd7af1dcd4c4c53b61997b8e46e88e3.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`using CUDA\ndev = CUDA.functional() ? cu : Array\n#dev = Array\nX = range(0 , 1 , 20)\nY = range(0 , 1 , 20)\nX_col = [ [x,y] for x in X , y in Y]\nX_col = reduce(vcat ,X_col )\nX_col = reshape(X_col, 2,:) |> dev\nX_t = range(0 , 1 , 100)\nY_t = range(0 , 1 , 100)\nX_test = [ [x,y] for x in X_t , y in Y_t]\nX_test = reduce(vcat , X_test)\nX_test = reshape(X_test, 2,:) |> dev\nX_lol = rand(2,400) |> dev\n\n\nsize(X_col)\n`);copyBtnbtn_6cd7af1dcd4c4c53b61997b8e46e88e3.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_6cd7af1dcd4c4c53b61997b8e46e88e3.innerHTML = '&#10697;'}, 3000);
 });
 </script>
 </div><div class="org-src-container">
-<pre class="src src-julia">X = range(<span style="color: #de935f; font-weight: bold;">0</span> , <span style="color: #de935f; font-weight: bold;">1</span> , <span style="color: #de935f; font-weight: bold;">100</span>)
-Y = range(<span style="color: #de935f; font-weight: bold;">0</span> , <span style="color: #de935f; font-weight: bold;">1</span> , <span style="color: #de935f; font-weight: bold;">100</span>)
+<pre class="src src-julia"><span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> CUDA
+dev = CUDA.functional() <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">?</span> cu <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">:</span> Array
+<span style="color: var(--clr-comment-delimiter); background-color: var(--bg-comment-delimiter);">#</span><span style="color: var(--clr-comment); background-color: var(--bg-comment);">dev = Array</span>
+X = range(<span style="color: #de935f; font-weight: bold;">0</span> , <span style="color: #de935f; font-weight: bold;">1</span> , <span style="color: #de935f; font-weight: bold;">20</span>)
+Y = range(<span style="color: #de935f; font-weight: bold;">0</span> , <span style="color: #de935f; font-weight: bold;">1</span> , <span style="color: #de935f; font-weight: bold;">20</span>)
 X_col = [ [x,y] <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">for</span> x in X , y <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">in</span> Y]
 X_col = reduce(vcat ,X_col )
-X_col = reshape(X_col, <span style="color: #de935f; font-weight: bold;">2</span>,:)
+X_col = reshape(X_col, <span style="color: #de935f; font-weight: bold;">2</span>,:) <span style="color: #f0c674;">|&gt;</span> dev
 X_t = range(<span style="color: #de935f; font-weight: bold;">0</span> , <span style="color: #de935f; font-weight: bold;">1</span> , <span style="color: #de935f; font-weight: bold;">100</span>)
 Y_t = range(<span style="color: #de935f; font-weight: bold;">0</span> , <span style="color: #de935f; font-weight: bold;">1</span> , <span style="color: #de935f; font-weight: bold;">100</span>)
 X_test = [ [x,y] <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">for</span> x in X_t , y <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">in</span> Y_t]
 X_test = reduce(vcat , X_test)
-X_test = reshape(X_test, <span style="color: #de935f; font-weight: bold;">2</span>,:)
+X_test = reshape(X_test, <span style="color: #de935f; font-weight: bold;">2</span>,:) <span style="color: #f0c674;">|&gt;</span> dev
+X_lol = rand(<span style="color: #de935f; font-weight: bold;">2</span>,<span style="color: #de935f; font-weight: bold;">400</span>) <span style="color: #f0c674;">|&gt;</span> dev
+
+
 size(X_col)
 </pre>
 </div></div>
 
 <pre class="example">
-(2 10000)
+(2 400)
 </pre>
 </div>
-<div id="outline-container-org39d3368" class="outline-4">
-<h4 id="org39d3368"><span class="section-number-4">4.1.1.</span> Result</h4>
+<div id="outline-container-org4026d7b" class="outline-4">
+<h4 id="org4026d7b"><span class="section-number-4">4.1.1.</span> Result</h4>
 <div class="outline-text-4" id="text-4-1-1">
 <div class='org-src-wrapper'>
-<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_3b150ec80d2f4bc09dff317c174281d9>&#10697;</button>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_21a9b97cf3cd46f3a01bc7c4e1501c7d>&#10697;</button>
 <script type='text/javascript'>
-var copyBtnbtn_3b150ec80d2f4bc09dff317c174281d9=document.querySelector('button[name=btn_3b150ec80d2f4bc09dff317c174281d9]');
-copyBtnbtn_3b150ec80d2f4bc09dff317c174281d9.addEventListener('click', function(event) {
-let res = copyTextToClipboard(`γ = 0.05\nk_gauss(x,y) = ksq( rbf_gaussian ,γ, x,y)\n∇k_gauss(x,y) =∇ksq(d_rbf_gaussian,γ , x,y)\nΔk_gauss(x,y) = Δksq(dd_rbf_gaussian , d_rbf_gaussian ,γ, x,y)\nS_gauss = PDESystem(k_gauss , ∇k_gauss , Δk_gauss , a, ∇a , f, g_D ,g_N , domain , ∇domain , sdf_β )\n`);copyBtnbtn_3b150ec80d2f4bc09dff317c174281d9.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_3b150ec80d2f4bc09dff317c174281d9.innerHTML = '&#10697;'}, 3000);
+var copyBtnbtn_21a9b97cf3cd46f3a01bc7c4e1501c7d=document.querySelector('button[name=btn_21a9b97cf3cd46f3a01bc7c4e1501c7d]');
+copyBtnbtn_21a9b97cf3cd46f3a01bc7c4e1501c7d.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`γ = 0.01\n@inline k_gauss(x,y) = @inline ksq( rbf_gaussian ,Val(0.1), x,y)\n@inline ∇k_gauss(x,y) =@inline ∇ksq(d_rbf_gaussian,Val(0.1) , x,y)\n@inline Δk_gauss(x,y) =@inline Δksq(dd_rbf_gaussian , d_rbf_gaussian ,Val(0.1), x,y)\nS_gauss = PDESystem(k_gauss , ∇k_gauss , Δk_gauss , a, ∇a , f, g_D ,g_N , domain , ∇domain , sdf_β )\n`);copyBtnbtn_21a9b97cf3cd46f3a01bc7c4e1501c7d.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_21a9b97cf3cd46f3a01bc7c4e1501c7d.innerHTML = '&#10697;'}, 3000);
 });
 </script>
 </div><div class="org-src-container">
-<pre class="src src-julia">&#947; = <span style="color: #de935f; font-weight: bold;">0.05</span>
-<span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">k_gauss</span>(x,y) = ksq( rbf_gaussian ,&#947;, x,y)
-<span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">&#8711;k_gauss</span>(x,y) =&#8711;ksq(d_rbf_gaussian,&#947; , x,y)
-<span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">&#916;k_gauss</span>(x,y) = &#916;ksq(dd_rbf_gaussian , d_rbf_gaussian ,&#947;, x,y)
+<pre class="src src-julia">&#947; = <span style="color: #de935f; font-weight: bold;">0.01</span>
+<span style="color: #c5c8c6; font-weight: bold;">@inline</span> <span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">k_gauss</span>(x,y) = <span style="color: #c5c8c6; font-weight: bold;">@inline</span> ksq( rbf_gaussian ,Val(<span style="color: #de935f; font-weight: bold;">0.1</span>), x,y)
+<span style="color: #c5c8c6; font-weight: bold;">@inline</span> <span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">&#8711;k_gauss</span>(x,y) =<span style="color: #c5c8c6; font-weight: bold;">@inline</span> &#8711;ksq(d_rbf_gaussian,Val(<span style="color: #de935f; font-weight: bold;">0.1</span>) , x,y)
+<span style="color: #c5c8c6; font-weight: bold;">@inline</span> <span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">&#916;k_gauss</span>(x,y) =<span style="color: #c5c8c6; font-weight: bold;">@inline</span> &#916;ksq(dd_rbf_gaussian , d_rbf_gaussian ,Val(<span style="color: #de935f; font-weight: bold;">0.1</span>), x,y)
 S_gauss = PDESystem(k_gauss , &#8711;k_gauss , &#916;k_gauss , a, &#8711;a , f, g_D ,g_N , domain , &#8711;domain , sdf_&#946; )
 </pre>
 </div></div>
 
 <div class='org-src-wrapper'>
-<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_24190d80b9094bc5bd5096266ea9b556>&#10697;</button>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_20c19c7b4d654d04b956275476d6874a>&#10697;</button>
 <script type='text/javascript'>
-var copyBtnbtn_24190d80b9094bc5bd5096266ea9b556=document.querySelector('button[name=btn_24190d80b9094bc5bd5096266ea9b556]');
-copyBtnbtn_24190d80b9094bc5bd5096266ea9b556.addEventListener('click', function(event) {
-let res = copyTextToClipboard(`k_plate(x,y) = ksq(thin_plate ,γ , x,y)\n∇k_plate(x,y) =∇ksq(d_thin_plate ,γ , x,y)\nΔk_plate(x,y) = Δksq(dd_thin_plate  , d_thin_plate ,γ, x,y)\nS_plate = PDESystem(k_plate , ∇k_plate , Δk_plate , a, ∇a , f, g_D ,g_N , domain , ∇domain , sdf_β )\n`);copyBtnbtn_24190d80b9094bc5bd5096266ea9b556.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_24190d80b9094bc5bd5096266ea9b556.innerHTML = '&#10697;'}, 3000);
+var copyBtnbtn_20c19c7b4d654d04b956275476d6874a=document.querySelector('button[name=btn_20c19c7b4d654d04b956275476d6874a]');
+copyBtnbtn_20c19c7b4d654d04b956275476d6874a.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`k_plate(x,y) = ksq(thin_plate ,γ , x,y)\n∇k_plate(x,y) =∇ksq(d_thin_plate ,γ , x,y)\nΔk_plate(x,y) = Δksq(dd_thin_plate  , d_thin_plate ,γ, x,y)\nS_plate = PDESystem(k_plate , ∇k_plate , Δk_plate , a, ∇a , f, g_D ,g_N , domain , ∇domain , sdf_β )\n`);copyBtnbtn_20c19c7b4d654d04b956275476d6874a.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_20c19c7b4d654d04b956275476d6874a.innerHTML = '&#10697;'}, 3000);
 });
 </script>
 </div><div class="org-src-container">
@@ -1567,11 +1575,11 @@ S_plate = PDESystem(k_plate , &#8711;k_plate , &#916;k_plate , a, &#8711;a , f, 
 
 
 <div class='org-src-wrapper'>
-<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_3acf992240564e468d184694255d3a39>&#10697;</button>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_5ab7099fb08e404499aceed18574da9a>&#10697;</button>
 <script type='text/javascript'>
-var copyBtnbtn_3acf992240564e468d184694255d3a39=document.querySelector('button[name=btn_3acf992240564e468d184694255d3a39]');
-copyBtnbtn_3acf992240564e468d184694255d3a39.addEventListener('click', function(event) {
-let res = copyTextToClipboard(`γ = 0.01\nk_bspline(x,y) = k(B_3,γ , x,y)\n∇k_bspline(x,y) =∇k(d_B_3,γ , x,y)\nΔk_bspline(x,y) = Δk(dd_B_3, d_B_3, γ , x,y)\nS_bspline = PDESystem(k_bspline , ∇k_bspline , Δk_bspline , a, ∇a , f, g_D ,g_N , domain , ∇domain , sdf_β )\n`);copyBtnbtn_3acf992240564e468d184694255d3a39.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_3acf992240564e468d184694255d3a39.innerHTML = '&#10697;'}, 3000);
+var copyBtnbtn_5ab7099fb08e404499aceed18574da9a=document.querySelector('button[name=btn_5ab7099fb08e404499aceed18574da9a]');
+copyBtnbtn_5ab7099fb08e404499aceed18574da9a.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`γ = 0.01\nk_bspline(x,y) = k(B_3,γ , x,y)\n∇k_bspline(x,y) =∇k(d_B_3,γ , x,y)\nΔk_bspline(x,y) = Δk(dd_B_3, d_B_3, γ , x,y)\nS_bspline = PDESystem(k_bspline , ∇k_bspline , Δk_bspline , a, ∇a , f, g_D ,g_N , domain , ∇domain , sdf_β )\n`);copyBtnbtn_5ab7099fb08e404499aceed18574da9a.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_5ab7099fb08e404499aceed18574da9a.innerHTML = '&#10697;'}, 3000);
 });
 </script>
 </div><div class="org-src-container">
@@ -1586,40 +1594,35 @@ S_bspline = PDESystem(k_bspline , &#8711;k_bspline , &#916;k_bspline , a, &#8711
 
 
 <div class='org-src-wrapper'>
-<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_5c2876291e19451aa78ad97d12ec15ac>&#10697;</button>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_efb1a64f69274a91a0978f56a69bba81>&#10697;</button>
 <script type='text/javascript'>
-var copyBtnbtn_5c2876291e19451aa78ad97d12ec15ac=document.querySelector('button[name=btn_5c2876291e19451aa78ad97d12ec15ac]');
-copyBtnbtn_5c2876291e19451aa78ad97d12ec15ac.addEventListener('click', function(event) {
-let res = copyTextToClipboard(`using LinearAlgebra\nsolution , K = solve(S_bspline ,X_col)\ncond(K)\n`);copyBtnbtn_5c2876291e19451aa78ad97d12ec15ac.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_5c2876291e19451aa78ad97d12ec15ac.innerHTML = '&#10697;'}, 3000);
+var copyBtnbtn_efb1a64f69274a91a0978f56a69bba81=document.querySelector('button[name=btn_efb1a64f69274a91a0978f56a69bba81]');
+copyBtnbtn_efb1a64f69274a91a0978f56a69bba81.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`using LinearAlgebra\nsolution , K = solve(S_gauss ,X_lol);\n#cond(K)\n\n`);copyBtnbtn_efb1a64f69274a91a0978f56a69bba81.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_efb1a64f69274a91a0978f56a69bba81.innerHTML = '&#10697;'}, 3000);
 });
 </script>
 </div><div class="org-src-container">
 <pre class="src src-julia"><span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> LinearAlgebra
-solution , K = solve(S_bspline ,X_col)
-cond(K)
+solution , K = solve(S_gauss ,X_lol);
+<span style="color: var(--clr-comment-delimiter); background-color: var(--bg-comment-delimiter);">#</span><span style="color: var(--clr-comment); background-color: var(--bg-comment);">cond(K)</span>
+
 </pre>
 </div></div>
 
-<pre class="example">
-julia-async:d326cad8-41e4-41d3-9bb0-c9eb9c013894
-</pre>
-
-
-
 <div class='org-src-wrapper'>
-<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_155c1b8324c54972863daf742758e5d0>&#10697;</button>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_9bce7f4f0a5d47f49555982dcad22baf>&#10697;</button>
 <script type='text/javascript'>
-var copyBtnbtn_155c1b8324c54972863daf742758e5d0=document.querySelector('button[name=btn_155c1b8324c54972863daf742758e5d0]');
-copyBtnbtn_155c1b8324c54972863daf742758e5d0.addEventListener('click', function(event) {
-let res = copyTextToClipboard(`using GLMakie\nfig = Figure()\nax = Axis(fig[1,1] , title=\"Aproximate solution\")\nsol , K_t = solution(X_test)\nsol = reshape(sol , size(X_t,1) , :)\nhm = heatmap!(ax , X,Y, sol)\nColorbar(fig[:, end+1], hm)\nsave(\"images/solution.png\",fig )\n`);copyBtnbtn_155c1b8324c54972863daf742758e5d0.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_155c1b8324c54972863daf742758e5d0.innerHTML = '&#10697;'}, 3000);
+var copyBtnbtn_9bce7f4f0a5d47f49555982dcad22baf=document.querySelector('button[name=btn_9bce7f4f0a5d47f49555982dcad22baf]');
+copyBtnbtn_9bce7f4f0a5d47f49555982dcad22baf.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`using GLMakie\nfig = Figure()\nax = Axis(fig[1,1] , title=\"Aproximate solution\", aspect=DataAspect())\nsol , K_t = solution(X_test)\nsol = reshape(Array(sol) , size(X_t,1) , :)\nhm = heatmap!(ax , X,Y, sol)\nColorbar(fig[:, end+1], hm)\nsave(\"images/solution.png\",fig )\n`);copyBtnbtn_9bce7f4f0a5d47f49555982dcad22baf.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_9bce7f4f0a5d47f49555982dcad22baf.innerHTML = '&#10697;'}, 3000);
 });
 </script>
 </div><div class="org-src-container">
-<pre class="src src-julia" id="orge072ba4"><span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> GLMakie
+<pre class="src src-julia" id="org9c7c6d7"><span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> GLMakie
 fig = Figure()
-ax = Axis(fig[<span style="color: #de935f; font-weight: bold;">1</span>,<span style="color: #de935f; font-weight: bold;">1</span>] , title=<span style="color: var(--clr-string); background-color: var(--bg-string);">"Aproximate solution"</span>)
+ax = Axis(fig[<span style="color: #de935f; font-weight: bold;">1</span>,<span style="color: #de935f; font-weight: bold;">1</span>] , title=<span style="color: var(--clr-string); background-color: var(--bg-string);">"Aproximate solution"</span>, aspect=DataAspect())
 sol , K_t = solution(X_test)
-sol = reshape(sol , size(X_t,<span style="color: #de935f; font-weight: bold;">1</span>) , :)
+sol = reshape(Array(sol) , size(X_t,<span style="color: #de935f; font-weight: bold;">1</span>) , :)
 hm = heatmap!(ax , X,Y, sol)
 Colorbar(fig[:, <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span><span style="color: #f0c674;">+</span><span style="color: #de935f; font-weight: bold;">1</span>], hm)
 save(<span style="color: var(--clr-string); background-color: var(--bg-string);">"images/solution.png"</span>,fig )
@@ -1627,25 +1630,25 @@ save(<span style="color: var(--clr-string); background-color: var(--bg-string);"
 </div></div>
 
 
-<div id="org932fa3f" class="figure">
+<div id="org1cb4739" class="figure">
 <p><img src="images/solution.png" alt="solution.png" />
 </p>
 </div>
 
 <div class='org-src-wrapper'>
-<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_06f8ee6ab0264af58ecfbebfccee2620>&#10697;</button>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_61acf4ba4c1d40f1bfcb47e6db687963>&#10697;</button>
 <script type='text/javascript'>
-var copyBtnbtn_06f8ee6ab0264af58ecfbebfccee2620=document.querySelector('button[name=btn_06f8ee6ab0264af58ecfbebfccee2620]');
-copyBtnbtn_06f8ee6ab0264af58ecfbebfccee2620.addEventListener('click', function(event) {
-let res = copyTextToClipboard(`using GLMakie\nu(x , y) = x * (1-x) * y* ( 1- y)\nu(x) = u(x[1] , x[2])\nfig = Figure()\nax = Axis(fig[1,1])\n\nhm = heatmap!(ax,X_t,Y_t,u)\nColorbar(fig[:, end+1], hm)\nsave(\"images/exact-solution.png\",fig )\n`);copyBtnbtn_06f8ee6ab0264af58ecfbebfccee2620.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_06f8ee6ab0264af58ecfbebfccee2620.innerHTML = '&#10697;'}, 3000);
+var copyBtnbtn_61acf4ba4c1d40f1bfcb47e6db687963=document.querySelector('button[name=btn_61acf4ba4c1d40f1bfcb47e6db687963]');
+copyBtnbtn_61acf4ba4c1d40f1bfcb47e6db687963.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`using GLMakie\nu(x , y) = x * (1-x) * y* ( 1- y)\nu(x) = u(x[1] , x[2])\nfig = Figure()\nax = Axis(fig[1,1] , title=\"Exact sollution\" , aspect=DataAspect())\n\nhm = heatmap!(ax,X_t,Y_t,u)\nColorbar(fig[:, end+1], hm)\nsave(\"images/exact-solution.png\",fig )\n`);copyBtnbtn_61acf4ba4c1d40f1bfcb47e6db687963.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_61acf4ba4c1d40f1bfcb47e6db687963.innerHTML = '&#10697;'}, 3000);
 });
 </script>
 </div><div class="org-src-container">
-<pre class="src src-julia" id="org197bc26"><span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> GLMakie
+<pre class="src src-julia" id="org08c1f08"><span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> GLMakie
 <span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">u</span>(x , y) = x <span style="color: #f0c674;">*</span> (<span style="color: #de935f; font-weight: bold;">1</span><span style="color: #f0c674;">-</span>x) <span style="color: #f0c674;">*</span> y<span style="color: #f0c674;">*</span> ( <span style="color: #de935f; font-weight: bold;">1</span><span style="color: #f0c674;">-</span> y)
 <span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">u</span>(x) = u(x[<span style="color: #de935f; font-weight: bold;">1</span>] , x[<span style="color: #de935f; font-weight: bold;">2</span>])
 fig = Figure()
-ax = Axis(fig[<span style="color: #de935f; font-weight: bold;">1</span>,<span style="color: #de935f; font-weight: bold;">1</span>])
+ax = Axis(fig[<span style="color: #de935f; font-weight: bold;">1</span>,<span style="color: #de935f; font-weight: bold;">1</span>] , title=<span style="color: var(--clr-string); background-color: var(--bg-string);">"Exact sollution"</span> , aspect=DataAspect())
 
 hm = heatmap!(ax,X_t,Y_t,u)
 Colorbar(fig[:, <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span><span style="color: #f0c674;">+</span><span style="color: #de935f; font-weight: bold;">1</span>], hm)
@@ -1654,47 +1657,47 @@ save(<span style="color: var(--clr-string); background-color: var(--bg-string);"
 </div></div>
 
 
-<div id="orge203aa9" class="figure">
+<div id="org4845140" class="figure">
 <p><img src="images/exact-solution.png" alt="exact-solution.png" />
 </p>
 </div>
 
 <div class='org-src-wrapper'>
-<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_5d4f7b0fe5f842579bcdf54abd622ddd>&#10697;</button>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_d4e571df8ed54c07b107912b8cce586a>&#10697;</button>
 <script type='text/javascript'>
-var copyBtnbtn_5d4f7b0fe5f842579bcdf54abd622ddd=document.querySelector('button[name=btn_5d4f7b0fe5f842579bcdf54abd622ddd]');
-copyBtnbtn_5d4f7b0fe5f842579bcdf54abd622ddd.addEventListener('click', function(event) {
-let res = copyTextToClipboard(`sol , _ = solution(X_test)\nnorm(sol - u.(eachcol(X_test)) , Inf)\n`);copyBtnbtn_5d4f7b0fe5f842579bcdf54abd622ddd.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_5d4f7b0fe5f842579bcdf54abd622ddd.innerHTML = '&#10697;'}, 3000);
+var copyBtnbtn_d4e571df8ed54c07b107912b8cce586a=document.querySelector('button[name=btn_d4e571df8ed54c07b107912b8cce586a]');
+copyBtnbtn_d4e571df8ed54c07b107912b8cce586a.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`sol , _ = solution(X_test)\nnorm(Array(sol) - u.(eachcol(Array(X_test))) , Inf)\n`);copyBtnbtn_d4e571df8ed54c07b107912b8cce586a.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_d4e571df8ed54c07b107912b8cce586a.innerHTML = '&#10697;'}, 3000);
 });
 </script>
 </div><div class="org-src-container">
 <pre class="src src-julia">sol , _ = solution(X_test)
-norm(sol <span style="color: #f0c674;">-</span> u.(eachcol(X_test)) , <span style="color: var(--clr-constant); background-color: var(--bg-constant);">Inf</span>)
+norm(Array(sol) <span style="color: #f0c674;">-</span> u.(eachcol(Array(X_test))) , <span style="color: var(--clr-constant); background-color: var(--bg-constant);">Inf</span>)
 </pre>
 </div></div>
 
 <pre class="example">
-0.027138303965330124
+0.00085476646f0
 </pre>
 </div>
 </div>
 </div>
-<div id="outline-container-orgd7bfeee" class="outline-3">
-<h3 id="orgd7bfeee"><span class="section-number-3">4.2.</span> Diffusion PDE</h3>
+<div id="outline-container-orgdf5eaa7" class="outline-3">
+<h3 id="orgdf5eaa7"><span class="section-number-3">4.2.</span> Diffusion PDE</h3>
 <div class="outline-text-3" id="text-4-2">
 </div>
-<div id="outline-container-org5bcfdb8" class="outline-4">
-<h4 id="org5bcfdb8"><span class="section-number-4">4.2.1.</span> Result</h4>
+<div id="outline-container-orgf170d3c" class="outline-4">
+<h4 id="orgf170d3c"><span class="section-number-4">4.2.1.</span> Result</h4>
 <div class="outline-text-4" id="text-4-2-1">
 <p>
 where
 </p>
 <div class='org-src-wrapper'>
-<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_948fc323ef674194bf933792f6a966f8>&#10697;</button>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_e5c01084913043a4a15470a8a4d0de2d>&#10697;</button>
 <script type='text/javascript'>
-var copyBtnbtn_948fc323ef674194bf933792f6a966f8=document.querySelector('button[name=btn_948fc323ef674194bf933792f6a966f8]');
-copyBtnbtn_948fc323ef674194bf933792f6a966f8.addEventListener('click', function(event) {
-let res = copyTextToClipboard(`using StaticArrays\na(x::SVector{2}) = x[1] + 2\n∇a(x::SVector{2}) = SVector{2}(1.,0.)\nα = 2.\nβ = 1.5\nf(x::SVector{2} , ::Val{α}) where α = - α*norm(x ,2)^(α - 2)*(3x[1] +4) - α*(α -2) * (x[1] + 2) * norm(x,2)^(α - 3)\ng_D(x::SVector{2} , ::Val{α}) where α = norm(x,2)^α\ng_N(x::SVector{2} , n::SVector{2} , ::Val{α}) where α = α* norm(x,2.)^(α-2.)*(x[1] +2.) * x ⋅ n\nf(x) = f(x,Val(α))\ng_D(x) = g_D(x,Val(α))\ng_N(x, n) = g_N(x , n,Val(α))\nfunction sdf_β(x::SVector{2})\n    return sdf_square(x , β , SVector(-1.,-1) )\nend\nS = PDESystem(k_gauss , ∇k_gauss , Δk_gauss , a, ∇a , f, g_D ,g_N , sdf_L , sdf_L_grad , sdf_β )\n`);copyBtnbtn_948fc323ef674194bf933792f6a966f8.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_948fc323ef674194bf933792f6a966f8.innerHTML = '&#10697;'}, 3000);
+var copyBtnbtn_e5c01084913043a4a15470a8a4d0de2d=document.querySelector('button[name=btn_e5c01084913043a4a15470a8a4d0de2d]');
+copyBtnbtn_e5c01084913043a4a15470a8a4d0de2d.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`using StaticArrays\na(x::SVector{2}) = x[1] + 2\n∇a(x::SVector{2}) = SVector{2}(1.,0.)\nα = 2.\nβ = 1.5\nf(x::SVector{2} , ::Val{α}) where α = - α*norm(x ,2)^(α - 2)*(3x[1] +4) - α*(α -2) * (x[1] + 2) * norm(x,2)^(α - 3)\ng_D(x::SVector{2} , ::Val{α}) where α = norm(x,2)^α\ng_N(x::SVector{2} , n::SVector{2} , ::Val{α}) where α = α* norm(x,2.)^(α-2.)*(x[1] +2.) * x ⋅ n\nf(x) = f(x,Val(α))\ng_D(x) = g_D(x,Val(α))\ng_N(x, n) = g_N(x , n,Val(α))\nfunction sdf_β(x::SVector{2})\n    return sdf_square(x , β , SVector(-1.,-1) )\nend\nS = PDESystem(k_gauss , ∇k_gauss , Δk_gauss , a, ∇a , f, g_D ,g_N , sdf_L , sdf_L_grad , sdf_β )\n`);copyBtnbtn_e5c01084913043a4a15470a8a4d0de2d.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_e5c01084913043a4a15470a8a4d0de2d.innerHTML = '&#10697;'}, 3000);
 });
 </script>
 </div><div class="org-src-container">
@@ -1722,11 +1725,11 @@ PDESystem(Main.k_gauss, Main.∇k_gauss, Main.Δk_gauss, Main.a, Main.∇a, Main
 
 
 <div class='org-src-wrapper'>
-<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_802dcede65f845bcbcdac279ed1885a8>&#10697;</button>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_d4f9ebff05bb42da9e6752d21e9c61d9>&#10697;</button>
 <script type='text/javascript'>
-var copyBtnbtn_802dcede65f845bcbcdac279ed1885a8=document.querySelector('button[name=btn_802dcede65f845bcbcdac279ed1885a8]');
-copyBtnbtn_802dcede65f845bcbcdac279ed1885a8.addEventListener('click', function(event) {
-let res = copyTextToClipboard(`X = range(-1 , 1 , 30)\nY = range(-1 , 1 , 30)\nX_col = [ [x,y] for x in X , y in Y]\nX_col = reduce(vcat ,X_col )\nX_col = reshape(X_col, 2,:)\nX_t = range(-2 , 2 , 100)\nY_t = range(-2, 2 , 100)\nX_test = [ [x,y] for x in X_t , y in Y_t]\nX_test = reduce(vcat , X_test)\nX_test = reshape(X_test, 2,:)\nsize(X_col)\n`);copyBtnbtn_802dcede65f845bcbcdac279ed1885a8.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_802dcede65f845bcbcdac279ed1885a8.innerHTML = '&#10697;'}, 3000);
+var copyBtnbtn_d4f9ebff05bb42da9e6752d21e9c61d9=document.querySelector('button[name=btn_d4f9ebff05bb42da9e6752d21e9c61d9]');
+copyBtnbtn_d4f9ebff05bb42da9e6752d21e9c61d9.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`X = range(-1 , 1 , 30)\nY = range(-1 , 1 , 30)\nX_col = [ [x,y] for x in X , y in Y]\nX_col = reduce(vcat ,X_col )\nX_col = reshape(X_col, 2,:)\nX_t = range(-2 , 2 , 100)\nY_t = range(-2, 2 , 100)\nX_test = [ [x,y] for x in X_t , y in Y_t]\nX_test = reduce(vcat , X_test)\nX_test = reshape(X_test, 2,:)\nsize(X_col)\n`);copyBtnbtn_d4f9ebff05bb42da9e6752d21e9c61d9.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_d4f9ebff05bb42da9e6752d21e9c61d9.innerHTML = '&#10697;'}, 3000);
 });
 </script>
 </div><div class="org-src-container">
@@ -1750,11 +1753,11 @@ size(X_col)
 
 
 <div class='org-src-wrapper'>
-<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_fb54a6f7f4b244a5b8775163551cb8c3>&#10697;</button>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_97c3e18c1ba7409dbfa1cce9de4f37c1>&#10697;</button>
 <script type='text/javascript'>
-var copyBtnbtn_fb54a6f7f4b244a5b8775163551cb8c3=document.querySelector('button[name=btn_fb54a6f7f4b244a5b8775163551cb8c3]');
-copyBtnbtn_fb54a6f7f4b244a5b8775163551cb8c3.addEventListener('click', function(event) {
-let res = copyTextToClipboard(`using LinearAlgebra\nsolution , K = solve(S ,X_col)\ncond(K)\n`);copyBtnbtn_fb54a6f7f4b244a5b8775163551cb8c3.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_fb54a6f7f4b244a5b8775163551cb8c3.innerHTML = '&#10697;'}, 3000);
+var copyBtnbtn_97c3e18c1ba7409dbfa1cce9de4f37c1=document.querySelector('button[name=btn_97c3e18c1ba7409dbfa1cce9de4f37c1]');
+copyBtnbtn_97c3e18c1ba7409dbfa1cce9de4f37c1.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`using LinearAlgebra\nsolution , K = solve(S ,X_col)\ncond(K)\n`);copyBtnbtn_97c3e18c1ba7409dbfa1cce9de4f37c1.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_97c3e18c1ba7409dbfa1cce9de4f37c1.innerHTML = '&#10697;'}, 3000);
 });
 </script>
 </div><div class="org-src-container">
@@ -1770,15 +1773,15 @@ cond(K)
 
 
 <div class='org-src-wrapper'>
-<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_a380206b5eb44719a5f81e6468b3c643>&#10697;</button>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_29648336375a4fc68099dd0bed449582>&#10697;</button>
 <script type='text/javascript'>
-var copyBtnbtn_a380206b5eb44719a5f81e6468b3c643=document.querySelector('button[name=btn_a380206b5eb44719a5f81e6468b3c643]');
-copyBtnbtn_a380206b5eb44719a5f81e6468b3c643.addEventListener('click', function(event) {
-let res = copyTextToClipboard(`using GLMakie\nfig = Figure()\nax = Axis(fig[1,1] , title=\"Aproximate solution\")\nsol , K = solution(X_test)\nsol = reshape(sol , size(X_t,1) , :)\nhm = heatmap!(ax , X,Y, sol)\nColorbar(fig[:, end+1], hm)\nsave(\"images/diffusion-solution.png\",fig )\n`);copyBtnbtn_a380206b5eb44719a5f81e6468b3c643.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_a380206b5eb44719a5f81e6468b3c643.innerHTML = '&#10697;'}, 3000);
+var copyBtnbtn_29648336375a4fc68099dd0bed449582=document.querySelector('button[name=btn_29648336375a4fc68099dd0bed449582]');
+copyBtnbtn_29648336375a4fc68099dd0bed449582.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`using GLMakie\nfig = Figure()\nax = Axis(fig[1,1] , title=\"Aproximate solution\")\nsol , K = solution(X_test)\nsol = reshape(sol , size(X_t,1) , :)\nhm = heatmap!(ax , X,Y, sol)\nColorbar(fig[:, end+1], hm)\nsave(\"images/diffusion-solution.png\",fig )\n`);copyBtnbtn_29648336375a4fc68099dd0bed449582.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_29648336375a4fc68099dd0bed449582.innerHTML = '&#10697;'}, 3000);
 });
 </script>
 </div><div class="org-src-container">
-<pre class="src src-julia" id="orga8e423f"><span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> GLMakie
+<pre class="src src-julia" id="orgab80e65"><span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> GLMakie
 fig = Figure()
 ax = Axis(fig[<span style="color: #de935f; font-weight: bold;">1</span>,<span style="color: #de935f; font-weight: bold;">1</span>] , title=<span style="color: var(--clr-string); background-color: var(--bg-string);">"Aproximate solution"</span>)
 sol , K = solution(X_test)
@@ -1792,15 +1795,15 @@ save(<span style="color: var(--clr-string); background-color: var(--bg-string);"
 </div>
 </div>
 </div>
-<div id="outline-container-org5c2d08a" class="outline-2">
-<h2 id="org5c2d08a"><span class="section-number-2">5.</span> Domains</h2>
+<div id="outline-container-org1e84c82" class="outline-2">
+<h2 id="org1e84c82"><span class="section-number-2">5.</span> Domains</h2>
 <div class="outline-text-2" id="text-5">
 <div class='org-src-wrapper'>
-<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_a348295cb30e45c3ac044c19a69d05c6>&#10697;</button>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_149a888bc4624f4d9aa18bb79e1def05>&#10697;</button>
 <script type='text/javascript'>
-var copyBtnbtn_a348295cb30e45c3ac044c19a69d05c6=document.querySelector('button[name=btn_a348295cb30e45c3ac044c19a69d05c6]');
-copyBtnbtn_a348295cb30e45c3ac044c19a69d05c6.addEventListener('click', function(event) {
-let res = copyTextToClipboard(`\nfunction sdf_square(x::SVector , r::Float64 , center::SVector)\n    return norm(x-center,Inf) .- r\nend\nfunction sdf_L(x::SVector{2})\n    return max(sdf_square(x , 1. , SVector(0,0)) , - sdf_square(x, 1. , SVector(1.,1.)))\nend\n\nfunction ∇sdf_L(x::SVector{2})\n    ForwardDiff.gradient(sdf_L , x)\n    return\nend\n\nfunction sdf_square_grad(x::SVector{2}, r::Float64, center::SVector{2})\n    d = x - center\n    if abs(d[1]) > abs(d[2])\n        return SVector(sign(d[1]), 0.0)\n    elseif abs(d[2]) > abs(d[1])\n        return SVector(0.0, sign(d[2]))\n    else\n        # Subgradient: pick any valid direction; here we average the two\n        return normalize(SVector(sign(d[1]), sign(d[2])))\n    end\nend\n\nfunction sdf_L_grad(x::SVector{2})\n    f1 = sdf_square(x, 1.0, SVector(0.0, 0.0))\n    f2 = -sdf_square(x, 1.0, SVector(1.0, 1.0))\n\n    if f1 > f2\n        return sdf_square_grad(x, 1.0, SVector(0.0, 0.0))\n    elseif f2 > f1\n        return -sdf_square_grad(x, 1.0, SVector(1.0, 1.0))  # negative because of the minus\n    else\n        # Subgradient — average of both directions\n        g1 = sdf_square_grad(x, 1.0, SVector(0.0, 0.0))\n        g2 = -sdf_square_grad(x, 1.0, SVector(1.0, 1.0))\n        return normalize(g1 + g2)\n    end\nend\n`);copyBtnbtn_a348295cb30e45c3ac044c19a69d05c6.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_a348295cb30e45c3ac044c19a69d05c6.innerHTML = '&#10697;'}, 3000);
+var copyBtnbtn_149a888bc4624f4d9aa18bb79e1def05=document.querySelector('button[name=btn_149a888bc4624f4d9aa18bb79e1def05]');
+copyBtnbtn_149a888bc4624f4d9aa18bb79e1def05.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`\nfunction sdf_square(x::SVector , r::Float64 , center::SVector)\n    return norm(x-center,Inf) .- r\nend\nfunction sdf_L(x::SVector{2})\n    return max(sdf_square(x , 1. , SVector(0,0)) , - sdf_square(x, 1. , SVector(1.,1.)))\nend\n\nfunction ∇sdf_L(x::SVector{2})\n    ForwardDiff.gradient(sdf_L , x)\n    return\nend\n\nfunction sdf_square_grad(x::SVector{2}, r::Float64, center::SVector{2})\n    d = x - center\n    if abs(d[1]) > abs(d[2])\n        return SVector(sign(d[1]), 0.0)\n    elseif abs(d[2]) > abs(d[1])\n        return SVector(0.0, sign(d[2]))\n    else\n        # Subgradient: pick any valid direction; here we average the two\n        return normalize(SVector(sign(d[1]), sign(d[2])))\n    end\nend\n\nfunction sdf_L_grad(x::SVector{2})\n    f1 = sdf_square(x, 1.0, SVector(0.0, 0.0))\n    f2 = -sdf_square(x, 1.0, SVector(1.0, 1.0))\n\n    if f1 > f2\n        return sdf_square_grad(x, 1.0, SVector(0.0, 0.0))\n    elseif f2 > f1\n        return -sdf_square_grad(x, 1.0, SVector(1.0, 1.0))  # negative because of the minus\n    else\n        # Subgradient — average of both directions\n        g1 = sdf_square_grad(x, 1.0, SVector(0.0, 0.0))\n        g2 = -sdf_square_grad(x, 1.0, SVector(1.0, 1.0))\n        return normalize(g1 + g2)\n    end\nend\n`);copyBtnbtn_149a888bc4624f4d9aa18bb79e1def05.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_149a888bc4624f4d9aa18bb79e1def05.innerHTML = '&#10697;'}, 3000);
 });
 </script>
 </div><div class="org-src-container">
