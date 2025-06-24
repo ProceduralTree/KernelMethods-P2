@@ -4,8 +4,69 @@
 module Kernel
 using StaticArrays
 using KernelAbstractions
-using LinearAlgebra
-using ForwardDiff;
+using LinearAlgebra;
+
+# Regression Approach
+# given \( \hat{X}:=\left\{ x_j \right\}_{j=1}^n \subset\RR ^d\) we aim to find \(u_h(x) \in \mathcal{H}_{k}\) such that it satisfies \eqref{eq:pde} where
+
+# \begin{align}
+# \label{eq:approx}
+# u_h(x) &= \sum_{j=1}^{n} a_j k(x_j,x)
+# \end{align}
+# correspondingly we are able to directly compute
+
+# \begin{align*}
+# \nabla_x u(x) &= \sum_{j=1}^n a_j \nabla_x  k(x_j ,x) \\
+# - \nabla_x \cdot \left( a(x) \nabla_x u(x) \right) &= - \left< \nabla_x a(x) , \nabla_x u(x) \right> - a(x) \Delta_x u(x) \\
+# &=  - \sum_{j=1}^{n} a_j \left( \left< \nabla_x a(x) , \nabla_x k(x_j,x)  \right> + a(x) \Delta_x k(x_j,x)\right)
+# \end{align*}
+# this leads to the following Linear system
+# \begin{align}
+# \label{eq:1}
+# K a &= f & x \in  \Omega
+# \end{align}
+# where
+
+ ; 
+@kernel function system_matrix!(A ,@Const(X), a , ∇a ,k, ∇k, Δk  , sdf , grad_sdf , sdf_beta)
+    Iᵢⱼ =  @index(Global , Cartesian)
+    @inbounds xᵢ= SVector{2}(view(X, : , Iᵢⱼ[1])) # Essentially X[:,i]
+    @inbounds xⱼ= SVector{2}(view(X, : , Iᵢⱼ[2])) # Essentially X[:,j]
+    # poisson equation
+    @inbounds A[Iᵢⱼ] = -a(xᵢ)*Δk(xᵢ,xⱼ)- ∇a(xᵢ)⋅∇k(xᵢ,xⱼ)
+    if abs(sdf(xᵢ)) < 1e-10
+        if sdf_beta(xᵢ) < 0
+            # Neumann Boundary Condition
+            @inbounds nᵢ= grad_sdf(xᵢ)
+            @inbounds A[Iᵢⱼ] = a(xᵢ) * (nᵢ ⋅ ∇k(xᵢ , xⱼ))
+        else
+          # Dirichlet Boundary
+          @inbounds A[Iᵢⱼ] =k(xᵢ , xⱼ)
+        end
+    end
+end;
+
+# right hand side
+
+ ; 
+@kernel function apply_function_colwise!(B ,@Const(X) , f , g_D , g_N , sdf  , grad_sdf, sdf_beta)
+    # boilerplate
+    Iᵢ = @index(Global , Cartesian)
+    @inbounds xᵢ= SVector{2}(view(X , : , Iᵢ[1]))
+    # poisson equation
+
+    @inbounds B[Iᵢ] = f(xᵢ)
+    if abs(sdf(xᵢ)) < 1e-10
+         if sdf_beta(xᵢ) < 0
+             # Neumann Boundary Condition
+             @inbounds nᵢ= grad_sdf(xᵢ)
+             @inbounds B[Iᵢ] = g_N(xᵢ , nᵢ )
+         else
+            # Dirichlet Boundary
+            @inbounds B[Iᵢ] = g_D(xᵢ)
+         end
+     end
+end;
 
 # Linear Sytem
 
@@ -28,11 +89,6 @@ using ForwardDiff;
     @inbounds xᵢ= SVector{2}(view(X_D , : , Iᵢⱼ[1])) # Essentially X[:,1]
     @inbounds xⱼ= SVector{2}(view(X , : , Iᵢⱼ[2]))
     K = k(xᵢ , xⱼ)
-    if isnan(K)
-        @print(Iᵢⱼ , "\n")
-        @print(xᵢ , "\n")
-        @print(xⱼ , "\n")
-        end
     @inbounds A[Iᵢⱼ] = K
 end;
 
@@ -48,38 +104,7 @@ end;
     @inbounds A[Iᵢⱼ] = a(xᵢ) * (nᵢ ⋅ ∇k(xᵢ , xⱼ))
     end;
 
-# right hand side
-
- ;
-@kernel function apply_function_colwise!(A ,@Const(X) , f::Function)
-    # boilerplate
-    Iᵢ = @index(Global , Cartesian)
-    @inbounds xᵢ= SVector{2}(view(X , : , Iᵢ[1]))
-    # element computation
-    @inbounds A[Iᵢ] = f(xᵢ)
-    end;
-
-# Combined System
-
-
- ;
-@kernel function system_matrix!(A ,@Const(X), a , ∇a ,k, ∇k, Δk  , sdf , grad_sdf , sdf_beta)
-    Iᵢⱼ =  @index(Global , Cartesian)
-    @inbounds xᵢ= SVector{2}(view(X, : , Iᵢⱼ[1])) # Essentially X[:,1]
-    @inbounds xⱼ= SVector{2}(view(X , : , Iᵢⱼ[2]))
-    if sdf(xᵢ) < 1e-10
-        if sdf_beta(xᵢ) < 0
-            @inbounds nᵢ= grad_sdf(xᵢ)
-            @inbounds A[Iᵢⱼ] = a(xᵢ) * (nᵢ ⋅ ∇k(xᵢ , xⱼ))
-        else
-           @inbounds A[Iᵢⱼ] =k(xᵢ , xⱼ)
-        end
-    else
-        @inbounds A[Iᵢⱼ] = ∇a(xᵢ)⋅∇k(xᵢ,xⱼ) -  a(xᵢ)*Δk(xⱼ,xᵢ)
-    end
-    end;
-
-# Postable
+# Postamble
 
  ; 
 export linear_matrix!

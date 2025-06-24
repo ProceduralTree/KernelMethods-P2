@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2025-06-08 So 09:18 -->
+<!-- 2025-06-23 Mon 20:00 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Kernel Collocation Excercise</title>
@@ -129,6 +129,11 @@ body {
     --clr-builtin: #969896;
     --bg-string: initial;
     --clr-string: #969896;
+    --clr-note: #0969da;
+    --clr-tip: #1a7f37;
+    --clr-important: #8250df;
+    --clr-warning: #9a6700;
+    --clr-caution: #cf222e;
 }
 
 body[data-mode='light'] {
@@ -177,6 +182,11 @@ body[data-mode='dark'] {
     --clr-builtin: #81a2be;
     --bg-string: initial;
     --clr-string: #b5bd68;
+    --clr-note: #0969da;
+    --clr-tip: #1a7f37;
+    --clr-important: #8250df;
+    --clr-warning: #9a6700;
+    --clr-caution: #cf222e;
 }
 
 /* exceptions for badly rendering themes **************************************/
@@ -489,6 +499,114 @@ pre {
     padding: 0.5rem;
 }
 
+.admonition {
+    margin: 0.2rem;
+    color: inherit;
+    border-left: .25rem solid;
+}
+.admonition-title {
+    margin: 0 0 0.5rem 0.5rem;
+    padding: 0.5rem 0 0 0;
+    display: flex;
+    align-items: center;
+}
+.admonition-content > p {
+    margin: 0.5rem 0 0 0.5rem;
+    padding: 0 0 0.5rem 0;
+}
+
+.admonition.note {
+    border-left-color: var(--clr-note);
+}
+.admonition-title.note {
+    color: var(--clr-note);
+}
+.admonition-title.note:before {
+    content: '';
+    display: inline-block;
+    margin-right: 0.5rem;
+    width: 1rem;
+    height: 1rem;
+    background-color: var(--clr-note);
+    mask-size: cover;    
+    mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="false"><path class="admonition-icon-note" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>');    
+}
+.admonition-icon-note {
+    fill: var(--clr-note);
+}
+
+.admonition.tip {
+    border-left-color: var(--clr-tip);
+}
+.admonition-title.tip {
+    color: var(--clr-tip);
+}
+.admonition-title.tip:before {
+    content: '';
+    fill: var(--clr-tip);    
+    display: inline-block;
+    margin-right: 0.5rem;
+    width: 1rem;
+    height: 1rem;
+    background-color: var(--clr-tip);
+    mask-size: cover;
+    mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="false"><path d="M8 1.5c-2.363 0-4 1.69-4 3.75 0 .984.424 1.625.984 2.304l.214.253c.223.264.47.556.673.848.284.411.537.896.621 1.49a.75.75 0 0 1-1.484.211c-.04-.282-.163-.547-.37-.847a8.456 8.456 0 0 0-.542-.68c-.084-.1-.173-.205-.268-.32C3.201 7.75 2.5 6.766 2.5 5.25 2.5 2.31 4.863 0 8 0s5.5 2.31 5.5 5.25c0 1.516-.701 2.5-1.328 3.259-.095.115-.184.22-.268.319-.207.245-.383.453-.541.681-.208.3-.33.565-.37.847a.751.751 0 0 1-1.485-.212c.084-.593.337-1.078.621-1.489.203-.292.45-.584.673-.848.075-.088.147-.173.213-.253.561-.679.985-1.32.985-2.304 0-2.06-1.637-3.75-4-3.75ZM5.75 12h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1 0-1.5ZM6 15.25a.75.75 0 0 1 .75-.75h2.5a.75.75 0 0 1 0 1.5h-2.5a.75.75 0 0 1-.75-.75Z"></path></svg>');    
+}
+
+.admonition.important {
+    border-left-color: var(--clr-important);
+}
+.admonition-title.important {
+    color: var(--clr-important);
+}
+.admonition-title.important:before {
+    content: '';
+    fill: var(--clr-important);    
+    display: inline-block;
+    margin-right: 0.5rem;
+    width: 1rem;
+    height: 1rem;
+    background-color: var(--clr-important);
+    mask-size: cover;
+    mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="false"><path d="M0 1.75C0 .784.784 0 1.75 0h12.5C15.216 0 16 .784 16 1.75v9.5A1.75 1.75 0 0 1 14.25 13H8.06l-2.573 2.573A1.458 1.458 0 0 1 3 14.543V13H1.75A1.75 1.75 0 0 1 0 11.25Zm1.75-.25a.25.25 0 0 0-.25.25v9.5c0 .138.112.25.25.25h2a.75.75 0 0 1 .75.75v2.19l2.72-2.72a.749.749 0 0 1 .53-.22h6.5a.25.25 0 0 0 .25-.25v-9.5a.25.25 0 0 0-.25-.25Zm7 2.25v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 9a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"></path></svg>');    
+}
+
+.admonition.warning {
+    border-left-color: var(--clr-warning);
+}
+.admonition-title.warning {
+    color: var(--clr-warning);
+}
+.admonition-title.warning:before {
+    content: '';
+    color: var(--clr-warning);    
+    display: inline-block;
+    margin-right: 0.5rem;
+    width: 1rem;
+    height: 1rem;
+    background-color: var(--clr-warning);
+    mask-size: cover;
+    mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="false"><path d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707a.25.25 0 0 0-.44 0L1.698 13.132a.25.25 0 0 0 .22.368h12.164a.25.25 0 0 0 .22-.368Zm.53 3.996v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"></path></svg>');
+}
+
+
+.admonition.caution {
+    border-left-color: var(--clr-caution);
+}
+.admonition-title.caution {
+    color: var(--clr-caution);
+}
+.admonition-title.caution:before {
+    content: '';
+    fill: var(--clr-caution);    
+    display: inline-block;
+    margin-right: 0.5rem;
+    width: 1rem;
+    height: 1rem;
+    background-color: var(--clr-caution);
+    mask-size: cover;
+    mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="false"><path d="M4.47.22A.749.749 0 0 1 5 0h6c.199 0 .389.079.53.22l4.25 4.25c.141.14.22.331.22.53v6a.749.749 0 0 1-.22.53l-4.25 4.25A.749.749 0 0 1 11 16H5a.749.749 0 0 1-.53-.22L.22 11.53A.749.749 0 0 1 0 11V5c0-.199.079-.389.22-.53Zm.84 1.28L1.5 5.31v5.38l3.81 3.81h5.38l3.81-3.81V5.31L10.69 1.5ZM8 4a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 8 4Zm0 8a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>');    
+}
 /* responsive layouts *********************************************************/
 
 @media only screen and (max-width: 768px) {
@@ -781,128 +899,38 @@ pre {
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#org4d734fa">1. Preamble</a></li>
-<li><a href="#orgcc47829">2. Regression Approach</a></li>
-<li><a href="#orgc240f0c">3. PDE System</a>
+<li><a href="#orgc17c63d">1. Regression Approach</a></li>
+<li><a href="#org4016e8b">2. Kernel Implementation</a></li>
+<li><a href="#org8c68f54">3. PDE</a>
 <ul>
-<li><a href="#orga255a00">3.1. Optimization Problem</a></li>
+<li><a href="#org306660f">3.1. PDE Poisson</a></li>
+<li><a href="#org8c5ccb8">3.2. Poisson PDE System</a></li>
+<li><a href="#orgc31df57">3.3. right hand side</a></li>
 </ul>
 </li>
-<li><a href="#orga019d40">4. Linear Sytem</a></li>
+<li><a href="#orgd002011">4. Solver</a></li>
+<li><a href="#org426043b">5. Domains</a>
+<ul>
+<li><a href="#orgfcc40b4">5.1. Utility</a></li>
+</ul>
+</li>
+<li><a href="#orgc89c76d">6. Results</a></li>
 </ul>
 </div>
 </div>
-<div id="outline-container-org4d734fa" class="outline-2">
-<h2 id="org4d734fa"><span class="section-number-2">1.</span> Preamble</h2>
+<div style="display:none">
+\(
+\newcommand{\RR}{\mathbb{R}}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\newtheorem{remark}{Remark}
+\)
+</div>
+<div id="outline-container-orgc17c63d" class="outline-2">
+<h2 id="orgc17c63d"><span class="section-number-2">1.</span> Regression Approach</h2>
 <div class="outline-text-2" id="text-1">
-<div class='org-src-wrapper'>
-<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_04e85ebcb3a4438eb03494993eaf5e46>&#10697;</button>
-<script type='text/javascript'>
-var copyBtnbtn_04e85ebcb3a4438eb03494993eaf5e46=document.querySelector('button[name=btn_04e85ebcb3a4438eb03494993eaf5e46]');
-copyBtnbtn_04e85ebcb3a4438eb03494993eaf5e46.addEventListener('click', function(event) {
-let res = copyTextToClipboard(`module PDESystem\n\nend\n`);copyBtnbtn_04e85ebcb3a4438eb03494993eaf5e46.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_04e85ebcb3a4438eb03494993eaf5e46.innerHTML = '&#10697;'}, 3000);
-});
-</script>
-</div><div class="org-src-container">
-<pre class="src src-julia"><span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">module</span> PDESystem
-
-<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
-</pre>
-</div></div>
-
-<div class='org-src-wrapper'>
-<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_eedae0a7b802419abeadd2262ed28adb>&#10697;</button>
-<script type='text/javascript'>
-var copyBtnbtn_eedae0a7b802419abeadd2262ed28adb=document.querySelector('button[name=btn_eedae0a7b802419abeadd2262ed28adb]');
-copyBtnbtn_eedae0a7b802419abeadd2262ed28adb.addEventListener('click', function(event) {
-let res = copyTextToClipboard(`test()\n`);copyBtnbtn_eedae0a7b802419abeadd2262ed28adb.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_eedae0a7b802419abeadd2262ed28adb.innerHTML = '&#10697;'}, 3000);
-});
-</script>
-</div><div class="org-src-container">
-<pre class="src src-julia">test()
-</pre>
-</div></div>
-
-<pre class="example">
-hello world
-</pre>
-
-
-<div class='org-src-wrapper'>
-<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_85f1341a270f4e14a72d6a031b5da2f9>&#10697;</button>
-<script type='text/javascript'>
-var copyBtnbtn_85f1341a270f4e14a72d6a031b5da2f9=document.querySelector('button[name=btn_85f1341a270f4e14a72d6a031b5da2f9]');
-copyBtnbtn_85f1341a270f4e14a72d6a031b5da2f9.addEventListener('click', function(event) {
-let res = copyTextToClipboard(`\nusing Plots\nf(x) = exp(x) + 10 * sin(x)\nplot(f)\nsavefig(\"images/plot.png\")\n`);copyBtnbtn_85f1341a270f4e14a72d6a031b5da2f9.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_85f1341a270f4e14a72d6a031b5da2f9.innerHTML = '&#10697;'}, 3000);
-});
-</script>
-</div><div class="org-src-container">
-<pre class="src src-julia">
-<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> Plots
-<span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">f</span>(x) = exp(x) <span style="color: #f0c674;">+</span> <span style="color: #de935f; font-weight: bold;">10</span> <span style="color: #f0c674;">*</span> sin(x)
-plot(f)
-savefig(<span style="color: var(--clr-string); background-color: var(--bg-string);">"images/plot.png"</span>)
-</pre>
-</div></div>
-
-
-<div id="org0cf6144" class="figure">
-<p><img src="images/plot.png" alt="plot.png" />
-</p>
-</div>
-<div class='org-src-wrapper'>
-<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_b572dbb9d6cc4fdcb5708826b95559cf>&#10697;</button>
-<script type='text/javascript'>
-var copyBtnbtn_b572dbb9d6cc4fdcb5708826b95559cf=document.querySelector('button[name=btn_b572dbb9d6cc4fdcb5708826b95559cf]');
-copyBtnbtn_b572dbb9d6cc4fdcb5708826b95559cf.addEventListener('click', function(event) {
-let res = copyTextToClipboard(`using KernelAbstractions\n\n@kernel function Δ_kernel(A , Δ)\n    I = @index(Global , Cartesian)\n    Ix = oneunit(I)\n    Δ[I] = 0\n    dimensions = ndims(A)\n    for i in 1:dimensions\n        zero(I)\n        In = CartesianIndex()\n        Δ[I] += A[I + In] - A[I]\n    end\nend\n`);copyBtnbtn_b572dbb9d6cc4fdcb5708826b95559cf.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_b572dbb9d6cc4fdcb5708826b95559cf.innerHTML = '&#10697;'}, 3000);
-});
-</script>
-</div><div class="org-src-container">
-<pre class="src src-julia"><span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> KernelAbstractions
-
-<span style="color: #c5c8c6; font-weight: bold;">@kernel</span> <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> &#916;_kernel(A , &#916;)
-<span style="color: #372338b83972;"> </span>   I = <span style="color: #c5c8c6; font-weight: bold;">@index</span>(Global , Cartesian)
-<span style="color: #372338b83972;"> </span>   Ix = oneunit(I)
-<span style="color: #372338b83972;"> </span>   &#916;[I] = <span style="color: #de935f; font-weight: bold;">0</span>
-<span style="color: #372338b83972;"> </span>   dimensions = ndims(A)
-<span style="color: #372338b83972;"> </span>   <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">for</span> i <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">in</span> <span style="color: #de935f; font-weight: bold;">1</span>:dimensions
-<span style="color: #372338b83972;"> </span>   <span style="color: #372338b83972;"> </span>   zero(I)
-<span style="color: #372338b83972;"> </span>   <span style="color: #372338b83972;"> </span>   In = CartesianIndex()
-<span style="color: #372338b83972;"> </span>   <span style="color: #372338b83972;"> </span>   &#916;[I] <span style="color: #f0c674;">+=</span> A[I <span style="color: #f0c674;">+</span> In] <span style="color: #f0c674;">-</span> A[I]
-<span style="color: #372338b83972;"> </span>   <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
-<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
-</pre>
-</div></div>
-
-<pre class="example">
-Δ_kernel (generic function with 4 methods)
-</pre>
-
-
-
-<div class='org-src-wrapper'>
-<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_fbb0c784eb4a49e4a651f851a5869cc7>&#10697;</button>
-<script type='text/javascript'>
-var copyBtnbtn_fbb0c784eb4a49e4a651f851a5869cc7=document.querySelector('button[name=btn_fbb0c784eb4a49e4a651f851a5869cc7]');
-copyBtnbtn_fbb0c784eb4a49e4a651f851a5869cc7.addEventListener('click', function(event) {
-let res = copyTextToClipboard(`dt = 0.1\nfor t in 0:0.1:10\nx += dx * dt\nend\n`);copyBtnbtn_fbb0c784eb4a49e4a651f851a5869cc7.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_fbb0c784eb4a49e4a651f851a5869cc7.innerHTML = '&#10697;'}, 3000);
-});
-</script>
-</div><div class="org-src-container">
-<pre class="src src-julia">dt = <span style="color: #de935f; font-weight: bold;">0.1</span>
-<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">for</span> t <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">in</span> <span style="color: #de935f; font-weight: bold;">0</span>:<span style="color: #de935f; font-weight: bold;">0.1</span>:<span style="color: #de935f; font-weight: bold;">10</span>
-x <span style="color: #f0c674;">+=</span> dx <span style="color: #f0c674;">*</span> dt
-<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
-</pre>
-</div></div>
-</div>
-</div>
-<div id="outline-container-orgcc47829" class="outline-2">
-<h2 id="orgcc47829"><span class="section-number-2">2.</span> Regression Approach</h2>
-<div class="outline-text-2" id="text-2">
 <p>
-given \( \hat{X}:=\left\{ x_j \right\}_{j=1}^n \subset\RR ^d\) we aim
+given \( \hat{X}:=\left\{ x_j \right\}_{j=1}^n \subset\RR ^d\) we aim to find \(u_h(x) \in \mathcal{H}_{k}\) such that it satisfies \eqref{eq:pde} where
 </p>
 
 \begin{align}
@@ -920,28 +948,128 @@ correspondingly we are able to directly compute
 \end{align*}
 <p>
 where \(\nabla_x , \Delta_x\) are the partial gradients and laplacians with respect to the second argument of \(k(x_j, \cdot )\).
-for a radial basis function \(\phi (r) \in  C^2(\RR)\)  and a corresponding RBF kernel \(k(x,x') := \phi (\|x-x'\|)\) they can be computed trivially
+for a radial basis function \(\phi (r^2) \in  C^2(\RR)\)  and a corresponding RBF kernel \(k(x,x') := \phi (\|x-x'\|^2)\) they can be computed trivially
 </p>
 \begin{align}
 \label{eq:2}
-\nabla_x k(x',x) &= \phi'(\|x-x'\|)x\\
-\Delta_x k(x',x) &= \phi''(\|x-x'\|) + \phi'(\|x-x'\|) \left< x,x \right>\\
+\nabla_x k(x',x) &= 2*(x - x')*\phi'(\|x-x'\|^2)\\
+\Delta_x k(x',x) &= 2*d*\phi'(\|x-x'\|^2) + 4*\phi''(\|x-x'\|^2) \left\|x-x'\right\|^2\\
 \end{align}
 <p>
-Aim of the regression is then, to minimize
+where \(d\) is the dimenstion of \(x\)
+this leads to the following Linear system
 </p>
-\begin{align}
-\label{eq:3}
-\mathcal{J}(\vec{a} ; \hat{X})
-\end{align}
+
+<div class='org-src-wrapper'>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_c99fa83172f14427955c37e3e4513ffe>&#10697;</button>
+<script type='text/javascript'>
+var copyBtnbtn_c99fa83172f14427955c37e3e4513ffe=document.querySelector('button[name=btn_c99fa83172f14427955c37e3e4513ffe]');
+copyBtnbtn_c99fa83172f14427955c37e3e4513ffe.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`\n@kernel function system_matrix!(A ,@Const(X), a , ∇a ,k, ∇k, Δk  , sdf , grad_sdf , sdf_beta)\n    Iᵢⱼ =  @index(Global , Cartesian)\n    @inbounds xᵢ= SVector{2}(view(X, : , Iᵢⱼ[1])) # Essentially X[:,i]\n    @inbounds xⱼ= SVector{2}(view(X, : , Iᵢⱼ[2])) # Essentially X[:,j]\n    if sdf(xᵢ) < 1e-10\n        if sdf_beta(xᵢ) < 0\n            # Neumann Boundary Condition\n            @inbounds nᵢ= grad_sdf(xᵢ)\n            @inbounds A[Iᵢⱼ] = a(xᵢ) * (nᵢ ⋅ ∇k(xᵢ , xⱼ))\n        else\n            # Dirichlet Boundary\n           @inbounds A[Iᵢⱼ] =k(xᵢ , xⱼ)\n        end\n    else\n        # poisson equation\n        @inbounds A[Iᵢⱼ] = ∇a(xᵢ)⋅∇k(xᵢ,xⱼ) -  a(xᵢ)*Δk(xⱼ,xᵢ)\n    end\n    end\n`);copyBtnbtn_c99fa83172f14427955c37e3e4513ffe.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_c99fa83172f14427955c37e3e4513ffe.innerHTML = '&#10697;'}, 3000);
+});
+</script>
+</div><div class="org-src-container">
+<pre class="src src-julia">
+<span style="color: #c5c8c6; font-weight: bold;">@kernel</span> <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> system_matrix!(A ,<span style="color: #c5c8c6; font-weight: bold;">@Const</span>(X), a , &#8711;a ,k, &#8711;k, &#916;k  , sdf , grad_sdf , sdf_beta)
+    I&#7522;&#11388; =  <span style="color: #c5c8c6; font-weight: bold;">@index</span>(Global , Cartesian)
+    <span style="color: #c5c8c6; font-weight: bold;">@inbounds</span> x&#7522;= SVector{<span style="color: #de935f; font-weight: bold;">2</span>}(view(X, : , I&#7522;&#11388;[<span style="color: #de935f; font-weight: bold;">1</span>])) <span style="color: var(--clr-comment-delimiter); background-color: var(--bg-comment-delimiter);"># </span><span style="color: var(--clr-comment); background-color: var(--bg-comment);">Essentially X[:,i]</span>
+    <span style="color: #c5c8c6; font-weight: bold;">@inbounds</span> x&#11388;= SVector{<span style="color: #de935f; font-weight: bold;">2</span>}(view(X, : , I&#7522;&#11388;[<span style="color: #de935f; font-weight: bold;">2</span>])) <span style="color: var(--clr-comment-delimiter); background-color: var(--bg-comment-delimiter);"># </span><span style="color: var(--clr-comment); background-color: var(--bg-comment);">Essentially X[:,j]</span>
+    <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">if</span> sdf(x&#7522;) <span style="color: #f0c674;">&lt;</span> <span style="color: #de935f; font-weight: bold;">1e-10</span>
+        <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">if</span> sdf_beta(x&#7522;) <span style="color: #f0c674;">&lt;</span> <span style="color: #de935f; font-weight: bold;">0</span>
+            <span style="color: var(--clr-comment-delimiter); background-color: var(--bg-comment-delimiter);"># </span><span style="color: var(--clr-comment); background-color: var(--bg-comment);">Neumann Boundary Condition</span>
+            <span style="color: #c5c8c6; font-weight: bold;">@inbounds</span> n&#7522;= grad_sdf(x&#7522;)
+            <span style="color: #c5c8c6; font-weight: bold;">@inbounds</span> A[I&#7522;&#11388;] = a(x&#7522;) <span style="color: #f0c674;">*</span> (n&#7522; &#8901; &#8711;k(x&#7522; , x&#11388;))
+        <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">else</span>
+            <span style="color: var(--clr-comment-delimiter); background-color: var(--bg-comment-delimiter);"># </span><span style="color: var(--clr-comment); background-color: var(--bg-comment);">Dirichlet Boundary</span>
+           <span style="color: #c5c8c6; font-weight: bold;">@inbounds</span> A[I&#7522;&#11388;] =k(x&#7522; , x&#11388;)
+        <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
+    <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">else</span>
+        <span style="color: var(--clr-comment-delimiter); background-color: var(--bg-comment-delimiter);"># </span><span style="color: var(--clr-comment); background-color: var(--bg-comment);">poisson equation</span>
+        <span style="color: #c5c8c6; font-weight: bold;">@inbounds</span> A[I&#7522;&#11388;] = &#8711;a(x&#7522;)&#8901;&#8711;k(x&#7522;,x&#11388;) <span style="color: #f0c674;">-</span>  a(x&#7522;)<span style="color: #f0c674;">*</span>&#916;k(x&#11388;,x&#7522;)
+    <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
+    <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
+</pre>
+</div></div>
 </div>
 </div>
-<div id="outline-container-orgc240f0c" class="outline-2">
-<h2 id="orgc240f0c"><span class="section-number-2">3.</span> PDE System</h2>
+<div id="outline-container-org4016e8b" class="outline-2">
+<h2 id="org4016e8b"><span class="section-number-2">2.</span> Kernel Implementation</h2>
+<div class="outline-text-2" id="text-2">
+<div class='org-src-wrapper'>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_a2cef1c7545a417bbb5aca78349b8850>&#10697;</button>
+<script type='text/javascript'>
+var copyBtnbtn_a2cef1c7545a417bbb5aca78349b8850=document.querySelector('button[name=btn_a2cef1c7545a417bbb5aca78349b8850]');
+copyBtnbtn_a2cef1c7545a417bbb5aca78349b8850.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`using StaticArrays\nfunction rbf_gaussian(r, ::Val{γ}) where γ\n    exp(- γ * r)\n    end\nfunction rbf_gaussian′(r , ::Val{γ}) where γ\n    - γ * exp(- γ * r)\n    end\nfunction rbf_gaussian′′(r , ::Val{γ}) where γ\n    γ^2 * exp(- γ * r)\n    end\nfunction k_gauss(x ::SVector{N}, x̂ ::SVector{N}) where N\n    rbf_gaussian(norm(x-x̂)^2 , Val(1.))\n    end\nfunction ∇k_gauss(x::SVector{N},x̂::SVector{N}) where N\n    rbf_gaussian′(norm(x-x̂)^2 , Val(1.)) * 2*(x-x̂)\n    end\nfunction Δk_gauss(x::SVector{N},x̂::SVector{N}) where N\n    d = dot(x-x̂,x-x̂)\n    4*rbf_gaussian′′(d , Val(1.))  + 4*rbf_gaussian′(d , Val(1.)) * d\n    end\n`);copyBtnbtn_a2cef1c7545a417bbb5aca78349b8850.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_a2cef1c7545a417bbb5aca78349b8850.innerHTML = '&#10697;'}, 3000);
+});
+</script>
+</div><div class="org-src-container">
+<pre class="src src-julia"><span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> StaticArrays
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> <span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">rbf_gaussian</span>(r, <span style="color: #f0c674;">::Val</span>{&#947;}) <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">where</span> &#947;
+    exp(<span style="color: #f0c674;">-</span> &#947; <span style="color: #f0c674;">*</span> r)
+    <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> <span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">rbf_gaussian&#8242;</span>(r , <span style="color: #f0c674;">::Val</span>{&#947;}) <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">where</span> &#947;
+    <span style="color: #f0c674;">-</span> &#947; <span style="color: #f0c674;">*</span> exp(<span style="color: #f0c674;">-</span> &#947; <span style="color: #f0c674;">*</span> r)
+    <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> <span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">rbf_gaussian&#8242;&#8242;</span>(r , <span style="color: #f0c674;">::Val</span>{&#947;}) <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">where</span> &#947;
+    &#947;<span style="color: #f0c674;">^</span><span style="color: #de935f; font-weight: bold;">2</span> <span style="color: #f0c674;">*</span> exp(<span style="color: #f0c674;">-</span> &#947; <span style="color: #f0c674;">*</span> r)
+    <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> <span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">k_gauss</span>(x <span style="color: #f0c674;">::SVector</span>{N}, x&#770; <span style="color: #f0c674;">::SVector</span>{N}) <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">where</span> N
+    rbf_gaussian(norm(x<span style="color: #f0c674;">-</span>x&#770;)<span style="color: #f0c674;">^</span><span style="color: #de935f; font-weight: bold;">2</span> , Val(<span style="color: #de935f; font-weight: bold;">1.</span>))
+    <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> <span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">&#8711;k_gauss</span>(x<span style="color: #f0c674;">::SVector</span>{N},x&#770;<span style="color: #f0c674;">::SVector</span>{N}) <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">where</span> N
+    rbf_gaussian&#8242;(norm(x<span style="color: #f0c674;">-</span>x&#770;)<span style="color: #f0c674;">^</span><span style="color: #de935f; font-weight: bold;">2</span> , Val(<span style="color: #de935f; font-weight: bold;">1.</span>)) <span style="color: #f0c674;">*</span> <span style="color: #de935f; font-weight: bold;">2</span><span style="color: #f0c674;">*</span>(x<span style="color: #f0c674;">-</span>x&#770;)
+    <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> <span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">&#916;k_gauss</span>(x<span style="color: #f0c674;">::SVector</span>{N},x&#770;<span style="color: #f0c674;">::SVector</span>{N}) <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">where</span> N
+    d = dot(x<span style="color: #f0c674;">-</span>x&#770;,x<span style="color: #f0c674;">-</span>x&#770;)
+    <span style="color: #de935f; font-weight: bold;">4</span><span style="color: #f0c674;">*</span>rbf_gaussian&#8242;&#8242;(d , Val(<span style="color: #de935f; font-weight: bold;">1.</span>))  <span style="color: #f0c674;">+</span> <span style="color: #de935f; font-weight: bold;">4</span><span style="color: #f0c674;">*</span>rbf_gaussian&#8242;(d , Val(<span style="color: #de935f; font-weight: bold;">1.</span>)) <span style="color: #f0c674;">*</span> d
+    <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
+</pre>
+</div></div>
+
+<pre class="example">
+Δk_gauss (generic function with 1 method)
+</pre>
+
+
+<div class='org-src-wrapper'>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_465592b6cad5493a8537fa16b51e3b01>&#10697;</button>
+<script type='text/javascript'>
+var copyBtnbtn_465592b6cad5493a8537fa16b51e3b01=document.querySelector('button[name=btn_465592b6cad5493a8537fa16b51e3b01]');
+copyBtnbtn_465592b6cad5493a8537fa16b51e3b01.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`using GLMakie\nX = range(-5 , 5 , 100)\nY = range(-5 , 5 , 100)\nusing LinearAlgebra\n\nfig = Figure()\nax = Axis3(fig[1,1] , aspect=:equal)\n\ngauss(x) = k_gauss(x , [0,0])\nz = [gauss([x,y]) for x in X , y in Y]\nsurface!(ax, X,Y, z)\nsave(\"images/gauss-rbf.png\",fig )\n`);copyBtnbtn_465592b6cad5493a8537fa16b51e3b01.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_465592b6cad5493a8537fa16b51e3b01.innerHTML = '&#10697;'}, 3000);
+});
+</script>
+</div><div class="org-src-container">
+<pre class="src src-julia"><span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> GLMakie
+X = range(<span style="color: #f0c674;">-</span><span style="color: #de935f; font-weight: bold;">5</span> , <span style="color: #de935f; font-weight: bold;">5</span> , <span style="color: #de935f; font-weight: bold;">100</span>)
+Y = range(<span style="color: #f0c674;">-</span><span style="color: #de935f; font-weight: bold;">5</span> , <span style="color: #de935f; font-weight: bold;">5</span> , <span style="color: #de935f; font-weight: bold;">100</span>)
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> LinearAlgebra
+
+fig = Figure()
+ax = Axis3(fig[<span style="color: #de935f; font-weight: bold;">1</span>,<span style="color: #de935f; font-weight: bold;">1</span>] , aspect=<span style="color: #de935f;">:equal</span>)
+
+<span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">gauss</span>(x) = k_gauss(x , [<span style="color: #de935f; font-weight: bold;">0</span>,<span style="color: #de935f; font-weight: bold;">0</span>])
+z = [gauss([x,y]) <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">for</span> x in X , y <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">in</span> Y]
+surface!(ax, X,Y, z)
+save(<span style="color: var(--clr-string); background-color: var(--bg-string);">"images/gauss-rbf.png"</span>,fig )
+</pre>
+</div></div>
+
+
+<div id="org31e1a9f" class="figure">
+<p><img src="images/gauss-rbf.png" alt="gauss-rbf.png" />
+</p>
+</div>
+</div>
+</div>
+<div id="outline-container-org8c68f54" class="outline-2">
+<h2 id="org8c68f54"><span class="section-number-2">3.</span> PDE</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 such that they satisfy the following system
 </p>
+
 \begin{align}
 \label{eq:pde}
 - \nabla  \left( a(x) \nabla u(x) \right) &= f(x) & \text{in} \quad \Omega \\
@@ -949,37 +1077,462 @@ u(x) &= g_D(x) & \text{on} \quad  \Gamma_D \\
 \left( a(x) \nabla u(x)  \right) \cdot  \vec{n}(x) &= g_N & \text{on} \quad \Gamma_N
 \end{align}
 </div>
-<div id="outline-container-orga255a00" class="outline-3">
-<h3 id="orga255a00"><span class="section-number-3">3.1.</span> Optimization Problem</h3>
+<div id="outline-container-org306660f" class="outline-3">
+<h3 id="org306660f"><span class="section-number-3">3.1.</span> PDE Poisson</h3>
 <div class="outline-text-3" id="text-3-1">
 <p>
-If the solution to the PDE system \eqref{eq:pde} exists, then finding the solution is equivalent to minimizing the following functional:
+this method is able to moddel the poisson equation
 </p>
 \begin{align}
-\label{eq:4}
-\mathcal{J}(u) &= \int_{\Omega}
+\label{eq:poisson}
+- \Delta u(x) &= f(x) & \text{in} \quad \Omega \\
+u(x) &= 0 & \text{on} \quad  \Gamma_D
 \end{align}
-</div>
-</div>
-</div>
-<div id="outline-container-orga019d40" class="outline-2">
-<h2 id="orga019d40"><span class="section-number-2">4.</span> Linear Sytem</h2>
-<div class="outline-text-2" id="text-4">
+<p>
+with \(a(x) = 1 , g_{D}(x) = 0\) and \(\Gamma_{N} = \emptyset \) this is equivalent to \eqref{eq:pde}
+</p>
 <div class='org-src-wrapper'>
-<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_04e0e471fef2440d9cbdb74160776294>&#10697;</button>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_3bcda42b59d0425088ac210145c32aac>&#10697;</button>
 <script type='text/javascript'>
-var copyBtnbtn_04e0e471fef2440d9cbdb74160776294=document.querySelector('button[name=btn_04e0e471fef2440d9cbdb74160776294]');
-copyBtnbtn_04e0e471fef2440d9cbdb74160776294.addEventListener('click', function(event) {
-let res = copyTextToClipboard(`using KernelAbstractions\n@kernel function assemble_matrix()\n\n    end\n`);copyBtnbtn_04e0e471fef2440d9cbdb74160776294.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_04e0e471fef2440d9cbdb74160776294.innerHTML = '&#10697;'}, 3000);
+var copyBtnbtn_3bcda42b59d0425088ac210145c32aac=document.querySelector('button[name=btn_3bcda42b59d0425088ac210145c32aac]');
+copyBtnbtn_3bcda42b59d0425088ac210145c32aac.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`using StaticArrays\na(x::SVector{2}) = 1\n∇a(x::SVector{2}) = SVector{2}(0.,0.)\n`);copyBtnbtn_3bcda42b59d0425088ac210145c32aac.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_3bcda42b59d0425088ac210145c32aac.innerHTML = '&#10697;'}, 3000);
 });
 </script>
 </div><div class="org-src-container">
-<pre class="src src-julia"><span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> KernelAbstractions
-<span style="color: #c5c8c6; font-weight: bold;">@kernel</span> <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> assemble_matrix()
- 
-<span style="color: #372338b83972;"> </span>   <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
+<pre class="src src-julia"><span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> StaticArrays
+<span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">a</span>(x<span style="color: #f0c674;">::SVector</span>{<span style="color: #de935f; font-weight: bold;">2</span>}) = <span style="color: #de935f; font-weight: bold;">1</span>
+<span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">&#8711;a</span>(x<span style="color: #f0c674;">::SVector</span>{<span style="color: #de935f; font-weight: bold;">2</span>}) = SVector{<span style="color: #de935f; font-weight: bold;">2</span>}(<span style="color: #de935f; font-weight: bold;">0.</span>,<span style="color: #de935f; font-weight: bold;">0.</span>)
 </pre>
 </div></div>
+<div class='org-src-wrapper'>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_639d4414ed0b4368a5166a05026da99c>&#10697;</button>
+<script type='text/javascript'>
+var copyBtnbtn_639d4414ed0b4368a5166a05026da99c=document.querySelector('button[name=btn_639d4414ed0b4368a5166a05026da99c]');
+copyBtnbtn_639d4414ed0b4368a5166a05026da99c.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`f(x::SVector{2}) = 2 * (x[1]+x[2] - x[1]^2 - x[2]^2)\ng_D(x::SVector{2})= 0\ng_N(x::SVector{2} , n::SVector{2}) = 0\n`);copyBtnbtn_639d4414ed0b4368a5166a05026da99c.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_639d4414ed0b4368a5166a05026da99c.innerHTML = '&#10697;'}, 3000);
+});
+</script>
+</div><div class="org-src-container">
+<pre class="src src-julia"><span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">f</span>(x<span style="color: #f0c674;">::SVector</span>{<span style="color: #de935f; font-weight: bold;">2</span>}) = <span style="color: #de935f; font-weight: bold;">2</span> <span style="color: #f0c674;">*</span> (x[<span style="color: #de935f; font-weight: bold;">1</span>]<span style="color: #f0c674;">+</span>x[<span style="color: #de935f; font-weight: bold;">2</span>] <span style="color: #f0c674;">-</span> x[<span style="color: #de935f; font-weight: bold;">1</span>]<span style="color: #f0c674;">^</span><span style="color: #de935f; font-weight: bold;">2</span> <span style="color: #f0c674;">-</span> x[<span style="color: #de935f; font-weight: bold;">2</span>]<span style="color: #f0c674;">^</span><span style="color: #de935f; font-weight: bold;">2</span>)
+<span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">g_D</span>(x<span style="color: #f0c674;">::SVector</span>{<span style="color: #de935f; font-weight: bold;">2</span>})= <span style="color: #de935f; font-weight: bold;">0</span>
+<span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">g_N</span>(x<span style="color: #f0c674;">::SVector</span>{<span style="color: #de935f; font-weight: bold;">2</span>} , n<span style="color: #f0c674;">::SVector</span>{<span style="color: #de935f; font-weight: bold;">2</span>}) = <span style="color: #de935f; font-weight: bold;">0</span>
+</pre>
+</div></div>
+</div>
+</div>
+<div id="outline-container-org8c5ccb8" class="outline-3">
+<h3 id="org8c5ccb8"><span class="section-number-3">3.2.</span> Poisson PDE System</h3>
+<div class="outline-text-3" id="text-3-2">
+<p>
+where
+</p>
+<div class='org-src-wrapper'>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_673413c57a90429ab4e7be15a5569fbe>&#10697;</button>
+<script type='text/javascript'>
+var copyBtnbtn_673413c57a90429ab4e7be15a5569fbe=document.querySelector('button[name=btn_673413c57a90429ab4e7be15a5569fbe]');
+copyBtnbtn_673413c57a90429ab4e7be15a5569fbe.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`using StaticArrays\na(x::SVector{2}) = x[1] + 2\n∇a(x::SVector{2}) = SVector{2}(1.,0.)\n`);copyBtnbtn_673413c57a90429ab4e7be15a5569fbe.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_673413c57a90429ab4e7be15a5569fbe.innerHTML = '&#10697;'}, 3000);
+});
+</script>
+</div><div class="org-src-container">
+<pre class="src src-julia"><span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> StaticArrays
+<span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">a</span>(x<span style="color: #f0c674;">::SVector</span>{<span style="color: #de935f; font-weight: bold;">2</span>}) = x[<span style="color: #de935f; font-weight: bold;">1</span>] <span style="color: #f0c674;">+</span> <span style="color: #de935f; font-weight: bold;">2</span>
+<span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">&#8711;a</span>(x<span style="color: #f0c674;">::SVector</span>{<span style="color: #de935f; font-weight: bold;">2</span>}) = SVector{<span style="color: #de935f; font-weight: bold;">2</span>}(<span style="color: #de935f; font-weight: bold;">1.</span>,<span style="color: #de935f; font-weight: bold;">0.</span>)
+</pre>
+</div></div>
+
+<pre class="example">
+∇a (generic function with 1 method)
+</pre>
+
+
+<div class='org-src-wrapper'>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_83d82168b1af4a69a8aa86acd3278507>&#10697;</button>
+<script type='text/javascript'>
+var copyBtnbtn_83d82168b1af4a69a8aa86acd3278507=document.querySelector('button[name=btn_83d82168b1af4a69a8aa86acd3278507]');
+copyBtnbtn_83d82168b1af4a69a8aa86acd3278507.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`α = 2.\nβ = 0.5\nf(x::SVector{2} , ::Val{α}) where α = - α*norm(x ,2)^(α - 2)*(3x[1] +4) - α*(α -2) * (x[1] + 2) * norm(x,2)^(α - 3)\ng_D(x::SVector{2} , ::Val{α}) where α = norm(x,2)^α\ng_N(x::SVector{2} , n::SVector{2} , ::Val{α}) where α = α* norm(x,2.)^(α-2.)*(x[1] +2.) * x ⋅ n\nf(x) = f(x,Val(α))\ng_D(x) = g_D(x,Val(α))\ng_N(x, n) = g_N(x , n,Val(α))\n`);copyBtnbtn_83d82168b1af4a69a8aa86acd3278507.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_83d82168b1af4a69a8aa86acd3278507.innerHTML = '&#10697;'}, 3000);
+});
+</script>
+</div><div class="org-src-container">
+<pre class="src src-julia">&#945; = <span style="color: #de935f; font-weight: bold;">2.</span>
+&#946; = <span style="color: #de935f; font-weight: bold;">0.5</span>
+<span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">f</span>(x<span style="color: #f0c674;">::SVector</span>{<span style="color: #de935f; font-weight: bold;">2</span>} , <span style="color: #f0c674;">::Val</span>{&#945;}) <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">where</span> &#945; = <span style="color: #f0c674;">-</span> &#945;<span style="color: #f0c674;">*</span>norm(x ,<span style="color: #de935f; font-weight: bold;">2</span>)<span style="color: #f0c674;">^</span>(&#945; <span style="color: #f0c674;">-</span> <span style="color: #de935f; font-weight: bold;">2</span>)<span style="color: #f0c674;">*</span>(<span style="color: #de935f; font-weight: bold;">3</span>x[<span style="color: #de935f; font-weight: bold;">1</span>] <span style="color: #f0c674;">+</span><span style="color: #de935f; font-weight: bold;">4</span>) <span style="color: #f0c674;">-</span> &#945;<span style="color: #f0c674;">*</span>(&#945; <span style="color: #f0c674;">-</span><span style="color: #de935f; font-weight: bold;">2</span>) <span style="color: #f0c674;">*</span> (x[<span style="color: #de935f; font-weight: bold;">1</span>] <span style="color: #f0c674;">+</span> <span style="color: #de935f; font-weight: bold;">2</span>) <span style="color: #f0c674;">*</span> norm(x,<span style="color: #de935f; font-weight: bold;">2</span>)<span style="color: #f0c674;">^</span>(&#945; <span style="color: #f0c674;">-</span> <span style="color: #de935f; font-weight: bold;">3</span>)
+<span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">g_D</span>(x<span style="color: #f0c674;">::SVector</span>{<span style="color: #de935f; font-weight: bold;">2</span>} , <span style="color: #f0c674;">::Val</span>{&#945;}) <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">where</span> &#945; = norm(x,<span style="color: #de935f; font-weight: bold;">2</span>)<span style="color: #f0c674;">^</span>&#945;
+<span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">g_N</span>(x<span style="color: #f0c674;">::SVector</span>{<span style="color: #de935f; font-weight: bold;">2</span>} , n<span style="color: #f0c674;">::SVector</span>{<span style="color: #de935f; font-weight: bold;">2</span>} , <span style="color: #f0c674;">::Val</span>{&#945;}) <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">where</span> &#945; = &#945;<span style="color: #f0c674;">*</span> norm(x,<span style="color: #de935f; font-weight: bold;">2.</span>)<span style="color: #f0c674;">^</span>(&#945;<span style="color: #f0c674;">-</span><span style="color: #de935f; font-weight: bold;">2.</span>)<span style="color: #f0c674;">*</span>(x[<span style="color: #de935f; font-weight: bold;">1</span>] <span style="color: #f0c674;">+</span><span style="color: #de935f; font-weight: bold;">2.</span>) <span style="color: #f0c674;">*</span> x &#8901; n
+<span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">f</span>(x) = f(x,Val(&#945;))
+<span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">g_D</span>(x) = g_D(x,Val(&#945;))
+<span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">g_N</span>(x, n) = g_N(x , n,Val(&#945;))
+</pre>
+</div></div>
+
+<pre class="example">
+g_N (generic function with 4 methods)
+</pre>
+</div>
+</div>
+<div id="outline-container-orgc31df57" class="outline-3">
+<h3 id="orgc31df57"><span class="section-number-3">3.3.</span> right hand side</h3>
+<div class="outline-text-3" id="text-3-3">
+<div class='org-src-wrapper'>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_9e7471a522694dd5808cab4ea1836f05>&#10697;</button>
+<script type='text/javascript'>
+var copyBtnbtn_9e7471a522694dd5808cab4ea1836f05=document.querySelector('button[name=btn_9e7471a522694dd5808cab4ea1836f05]');
+copyBtnbtn_9e7471a522694dd5808cab4ea1836f05.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`\n@kernel function apply_function_colwise!(B ,@Const(X) , f , g_D , g_N , sdf  , grad_sdf, sdf_beta)\n    # boilerplate\n    Iᵢ = @index(Global , Cartesian)\n    @inbounds xᵢ= SVector{2}(view(X , : , Iᵢ[1]))\n    # element computation\n    if sdf(xᵢ) < 1e-10\n        if sdf_beta(xᵢ) < 0\n            # Neumann Boundary Condition\n            @inbounds nᵢ= grad_sdf(xᵢ)\n            @inbounds B[Iᵢ] = g_N(xᵢ , nᵢ )\n        else\n            # Dirichlet Boundary\n            @inbounds B[Iᵢ] = g_D(xᵢ)\n        end\n    else\n        # poisson equation\n        @inbounds A[Iᵢⱼ] = ∇a(xᵢ)⋅∇k(xᵢ,xⱼ) -  a(xᵢ)*Δk(xⱼ,xᵢ)\n    end\n    @inbounds A[Iᵢ] = f(xᵢ)\n    end\n`);copyBtnbtn_9e7471a522694dd5808cab4ea1836f05.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_9e7471a522694dd5808cab4ea1836f05.innerHTML = '&#10697;'}, 3000);
+});
+</script>
+</div><div class="org-src-container">
+<pre class="src src-julia">
+<span style="color: #c5c8c6; font-weight: bold;">@kernel</span> <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> apply_function_colwise!(B ,<span style="color: #c5c8c6; font-weight: bold;">@Const</span>(X) , f , g_D , g_N , sdf  , grad_sdf, sdf_beta)
+    <span style="color: var(--clr-comment-delimiter); background-color: var(--bg-comment-delimiter);"># </span><span style="color: var(--clr-comment); background-color: var(--bg-comment);">boilerplate</span>
+    I&#7522; = <span style="color: #c5c8c6; font-weight: bold;">@index</span>(Global , Cartesian)
+    <span style="color: #c5c8c6; font-weight: bold;">@inbounds</span> x&#7522;= SVector{<span style="color: #de935f; font-weight: bold;">2</span>}(view(X , : , I&#7522;[<span style="color: #de935f; font-weight: bold;">1</span>]))
+    <span style="color: var(--clr-comment-delimiter); background-color: var(--bg-comment-delimiter);"># </span><span style="color: var(--clr-comment); background-color: var(--bg-comment);">element computation</span>
+    <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">if</span> sdf(x&#7522;) <span style="color: #f0c674;">&lt;</span> <span style="color: #de935f; font-weight: bold;">1e-10</span>
+        <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">if</span> sdf_beta(x&#7522;) <span style="color: #f0c674;">&lt;</span> <span style="color: #de935f; font-weight: bold;">0</span>
+            <span style="color: var(--clr-comment-delimiter); background-color: var(--bg-comment-delimiter);"># </span><span style="color: var(--clr-comment); background-color: var(--bg-comment);">Neumann Boundary Condition</span>
+            <span style="color: #c5c8c6; font-weight: bold;">@inbounds</span> n&#7522;= grad_sdf(x&#7522;)
+            <span style="color: #c5c8c6; font-weight: bold;">@inbounds</span> B[I&#7522;] = g_N(x&#7522; , n&#7522; )
+        <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">else</span>
+            <span style="color: var(--clr-comment-delimiter); background-color: var(--bg-comment-delimiter);"># </span><span style="color: var(--clr-comment); background-color: var(--bg-comment);">Dirichlet Boundary</span>
+            <span style="color: #c5c8c6; font-weight: bold;">@inbounds</span> B[I&#7522;] = g_D(x&#7522;)
+        <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
+    <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">else</span>
+        <span style="color: var(--clr-comment-delimiter); background-color: var(--bg-comment-delimiter);"># </span><span style="color: var(--clr-comment); background-color: var(--bg-comment);">poisson equation</span>
+        <span style="color: #c5c8c6; font-weight: bold;">@inbounds</span> A[I&#7522;&#11388;] = &#8711;a(x&#7522;)&#8901;&#8711;k(x&#7522;,x&#11388;) <span style="color: #f0c674;">-</span>  a(x&#7522;)<span style="color: #f0c674;">*</span>&#916;k(x&#11388;,x&#7522;)
+    <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
+    <span style="color: #c5c8c6; font-weight: bold;">@inbounds</span> A[I&#7522;] = f(x&#7522;)
+    <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
+</pre>
+</div></div>
+</div>
+</div>
+</div>
+<div id="outline-container-orgd002011" class="outline-2">
+<h2 id="orgd002011"><span class="section-number-2">4.</span> Solver</h2>
+<div class="outline-text-2" id="text-4">
+<div class='org-src-wrapper'>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_851ed5016a1e42d1832f447c03e02cff>&#10697;</button>
+<script type='text/javascript'>
+var copyBtnbtn_851ed5016a1e42d1832f447c03e02cff=document.querySelector('button[name=btn_851ed5016a1e42d1832f447c03e02cff]');
+copyBtnbtn_851ed5016a1e42d1832f447c03e02cff.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`module PDESolvers\n\nexport PDESolver, PDESystem, solve\ninclude(\"kernel.jl\")\n\nusing .Kernel\nusing KernelAbstractions\nusing LinearAlgebra\n`);copyBtnbtn_851ed5016a1e42d1832f447c03e02cff.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_851ed5016a1e42d1832f447c03e02cff.innerHTML = '&#10697;'}, 3000);
+});
+</script>
+</div><div class="org-src-container">
+<pre class="src src-julia"><span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">module</span> PDESolvers
+
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">export</span> PDESolver, PDESystem, solve
+include(<span style="color: var(--clr-string); background-color: var(--bg-string);">"kernel.jl"</span>)
+
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> .Kernel
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> KernelAbstractions
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> LinearAlgebra
+</pre>
+</div></div>
+
+<div class='org-src-wrapper'>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_053af74f64e145b3bd17631667b67637>&#10697;</button>
+<script type='text/javascript'>
+var copyBtnbtn_053af74f64e145b3bd17631667b67637=document.querySelector('button[name=btn_053af74f64e145b3bd17631667b67637]');
+copyBtnbtn_053af74f64e145b3bd17631667b67637.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`struct PDESystem\n    k :: Function\n    ∇k :: Function\n    Δk :: Function\n    a :: Function\n    ∇a::Function\n    f::Function\n    g_D::Function\n    g_N::Function\n    sdf::Function\n    grad_sdf::Function\n    sdf_beta::Function\nend\n\nstruct PDESolver\n    S::PDESystem\n    X::AbstractMatrix\n    α :: AbstractVector\nend\n\nfunction (f::PDESolver)(X)\n    local X_col = [f.X_L f.X_D f.X_N]\n    dev = get_backend(X_col)\n    print(\"Backend\" , dev)\n    K = KernelAbstractions.zeros(dev , Float32, size(X,2)  , size(X_col ,2))\n    print(\"Size of the system Matrix:\" , size(K))\n    kernel_matrix! = dirichlet_matrix!( dev , 256 , size(K))\n    kernel_matrix!(K, X , X_col , f.S.k )\nreturn K * f.α\nend\n\nfunction solve(S, X_col)\n    dev = get_backend(X_col)\n    K = KernelAbstractions.zeros(dev , Float32 , size(X_col , 2) , size(X_col , 2) )\n    sys_matrix! = system_matrix!( dev , 256 , size(K))\n    sys_matrix!(K ,X_col , S.a , S.∇a , S.k , S.∇k , S.Δk , S.sdf , S.grad_sdf , S.sdf_beta  )\n    end\n\n\nfunction get_boundary(\n    S,\n    X\n    )\n    dev = get_backend(X)\n    B = KernelAbstractions.zeros(dev , Float32 , size(X , 2))\n    apply! = apply_function_colwise!(dev , 256 , size(X))\n    apply!(B , X_L , S.f , S.g_D , S.g_N , S.sdf  , S.grad_sdf, S.sdf_beta)\n    return B\n    end\n\n`);copyBtnbtn_053af74f64e145b3bd17631667b67637.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_053af74f64e145b3bd17631667b67637.innerHTML = '&#10697;'}, 3000);
+});
+</script>
+</div><div class="org-src-container">
+<pre class="src src-julia"><span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">struct</span> <span style="color: #f0c674;">PDESystem</span>
+    k <span style="color: #f0c674;">::</span> <span style="color: #f0c674;">Function</span>
+    &#8711;k <span style="color: #f0c674;">::</span> <span style="color: #f0c674;">Function</span>
+    &#916;k <span style="color: #f0c674;">::</span> <span style="color: #f0c674;">Function</span>
+    a <span style="color: #f0c674;">::</span> <span style="color: #f0c674;">Function</span>
+    &#8711;a<span style="color: #f0c674;">::Function</span>
+    f<span style="color: #f0c674;">::Function</span>
+    g_D<span style="color: #f0c674;">::Function</span>
+    g_N<span style="color: #f0c674;">::Function</span>
+    sdf<span style="color: #f0c674;">::Function</span>
+    grad_sdf<span style="color: #f0c674;">::Function</span>
+    sdf_beta<span style="color: #f0c674;">::Function</span>
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
+
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">struct</span> <span style="color: #f0c674;">PDESolver</span>
+    S<span style="color: #f0c674;">::PDESystem</span>
+    X<span style="color: #f0c674;">::AbstractMatrix</span>
+    &#945; <span style="color: #f0c674;">::</span> <span style="color: #f0c674;">AbstractVector</span>
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
+
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> (f<span style="color: #f0c674;">::PDESolver</span>)(X)
+    <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">local</span> X_col = [f.X_L f.X_D f.X_N]
+    dev = get_backend(X_col)
+    print(<span style="color: var(--clr-string); background-color: var(--bg-string);">"Backend"</span> , dev)
+    K = KernelAbstractions.zeros(dev , Float32, size(X,<span style="color: #de935f; font-weight: bold;">2</span>)  , size(X_col ,<span style="color: #de935f; font-weight: bold;">2</span>))
+    print(<span style="color: var(--clr-string); background-color: var(--bg-string);">"Size of the system Matrix:"</span> , size(K))
+    kernel_matrix! = dirichlet_matrix!( dev , <span style="color: #de935f; font-weight: bold;">256</span> , size(K))
+    kernel_matrix!(K, X , X_col , f.S.k )
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">return</span> K <span style="color: #f0c674;">*</span> f.&#945;
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
+
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> <span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">solve</span>(S, X_col)
+    dev = get_backend(X_col)
+    K = KernelAbstractions.zeros(dev , Float32 , size(X_col , <span style="color: #de935f; font-weight: bold;">2</span>) , size(X_col , <span style="color: #de935f; font-weight: bold;">2</span>) )
+    sys_matrix! = system_matrix!( dev , <span style="color: #de935f; font-weight: bold;">256</span> , size(K))
+    sys_matrix!(K ,X_col , S.a , S.&#8711;a , S.k , S.&#8711;k , S.&#916;k , S.sdf , S.grad_sdf , S.sdf_beta  )
+    <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
+
+
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> <span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">get_boundary</span>(
+    S,
+    X
+    )
+    dev = get_backend(X)
+    B = KernelAbstractions.zeros(dev , Float32 , size(X , <span style="color: #de935f; font-weight: bold;">2</span>))
+    apply! = apply_function_colwise!(dev , <span style="color: #de935f; font-weight: bold;">256</span> , size(X))
+    apply!(B , X_L , S.f , S.g_D , S.g_N , S.sdf  , S.grad_sdf, S.sdf_beta)
+    <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">return</span> B
+    <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
+
+</pre>
+</div></div>
+
+<div class='org-src-wrapper'>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_5721859437f94b91b06bf0012959ffc1>&#10697;</button>
+<script type='text/javascript'>
+var copyBtnbtn_5721859437f94b91b06bf0012959ffc1=document.querySelector('button[name=btn_5721859437f94b91b06bf0012959ffc1]');
+copyBtnbtn_5721859437f94b91b06bf0012959ffc1.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`end\n`);copyBtnbtn_5721859437f94b91b06bf0012959ffc1.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_5721859437f94b91b06bf0012959ffc1.innerHTML = '&#10697;'}, 3000);
+});
+</script>
+</div><div class="org-src-container">
+<pre class="src src-julia"><span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
+</pre>
+</div></div>
+</div>
+</div>
+<div id="outline-container-org426043b" class="outline-2">
+<h2 id="org426043b"><span class="section-number-2">5.</span> Domains</h2>
+<div class="outline-text-2" id="text-5">
+</div>
+<div id="outline-container-orgfcc40b4" class="outline-3">
+<h3 id="orgfcc40b4"><span class="section-number-3">5.1.</span> Utility</h3>
+<div class="outline-text-3" id="text-5-1">
+<div class='org-src-wrapper'>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_aca2bbbaddd7488c96f81fa34562b57c>&#10697;</button>
+<script type='text/javascript'>
+var copyBtnbtn_aca2bbbaddd7488c96f81fa34562b57c=document.querySelector('button[name=btn_aca2bbbaddd7488c96f81fa34562b57c]');
+copyBtnbtn_aca2bbbaddd7488c96f81fa34562b57c.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`\nfunction sdf_square(x::SVector , r::Float64 , center::SVector)\n    return norm(x-center,Inf) .- r\nend\n\nfunction sdf_L(x::SVector{2})\n    return max(sdf_square(x , 1. , SVector(0,0)) , - sdf_square(x, 1. , SVector(1.,1.)))\nend\n\nfunction ∇sdf_L(x::SVector{2})\n    ForwardDiff.gradient(sdf_L , x)\n    return\nend\n\nfunction sdf_β(x::SVector{2})\n    return sdf_square(x , 0.2 , SVector(-1.,-1) )\nend\nfunction sdf_square_grad(x::SVector{2}, r::Float64, center::SVector{2})\n    d = x - center\n    if abs(d[1]) > abs(d[2])\n        return SVector(sign(d[1]), 0.0)\n    elseif abs(d[2]) > abs(d[1])\n        return SVector(0.0, sign(d[2]))\n    else\n        # Subgradient: pick any valid direction; here we average the two\n        return normalize(SVector(sign(d[1]), sign(d[2])))\n    end\nend\n\nfunction sdf_L_grad(x::SVector{2})\n    f1 = sdf_square(x, 1.0, SVector(0.0, 0.0))\n    f2 = -sdf_square(x, 1.0, SVector(1.0, 1.0))\n\n    if f1 > f2\n        return sdf_square_grad(x, 1.0, SVector(0.0, 0.0))\n    elseif f2 > f1\n        return -sdf_square_grad(x, 1.0, SVector(1.0, 1.0))  # negative because of the minus\n    else\n        # Subgradient — average of both directions\n        g1 = sdf_square_grad(x, 1.0, SVector(0.0, 0.0))\n        g2 = -sdf_square_grad(x, 1.0, SVector(1.0, 1.0))\n        return normalize(g1 + g2)\n    end\nend\n`);copyBtnbtn_aca2bbbaddd7488c96f81fa34562b57c.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_aca2bbbaddd7488c96f81fa34562b57c.innerHTML = '&#10697;'}, 3000);
+});
+</script>
+</div><div class="org-src-container">
+<pre class="src src-julia">
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> <span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">sdf_square</span>(x<span style="color: #f0c674;">::SVector</span> , r<span style="color: #f0c674;">::Float64</span> , center<span style="color: #f0c674;">::SVector</span>)
+    <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">return</span> norm(x<span style="color: #f0c674;">-</span>center,<span style="color: var(--clr-constant); background-color: var(--bg-constant);">Inf</span>) .<span style="color: #f0c674;">-</span> r
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
+
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> <span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">sdf_L</span>(x<span style="color: #f0c674;">::SVector</span>{<span style="color: #de935f; font-weight: bold;">2</span>})
+    <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">return</span> max(sdf_square(x , <span style="color: #de935f; font-weight: bold;">1.</span> , SVector(<span style="color: #de935f; font-weight: bold;">0</span>,<span style="color: #de935f; font-weight: bold;">0</span>)) , <span style="color: #f0c674;">-</span> sdf_square(x, <span style="color: #de935f; font-weight: bold;">1.</span> , SVector(<span style="color: #de935f; font-weight: bold;">1.</span>,<span style="color: #de935f; font-weight: bold;">1.</span>)))
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
+
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> <span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">&#8711;sdf_L</span>(x<span style="color: #f0c674;">::SVector</span>{<span style="color: #de935f; font-weight: bold;">2</span>})
+    ForwardDiff.gradient(sdf_L , x)
+    <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">return</span>
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
+
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> <span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">sdf_&#946;</span>(x<span style="color: #f0c674;">::SVector</span>{<span style="color: #de935f; font-weight: bold;">2</span>})
+    <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">return</span> sdf_square(x , <span style="color: #de935f; font-weight: bold;">0.2</span> , SVector(<span style="color: #f0c674;">-</span><span style="color: #de935f; font-weight: bold;">1.</span>,<span style="color: #f0c674;">-</span><span style="color: #de935f; font-weight: bold;">1</span>) )
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> <span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">sdf_square_grad</span>(x<span style="color: #f0c674;">::SVector</span>{<span style="color: #de935f; font-weight: bold;">2</span>}, r<span style="color: #f0c674;">::Float64</span>, center<span style="color: #f0c674;">::SVector</span>{<span style="color: #de935f; font-weight: bold;">2</span>})
+    d = x <span style="color: #f0c674;">-</span> center
+    <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">if</span> abs(d[<span style="color: #de935f; font-weight: bold;">1</span>]) <span style="color: #f0c674;">&gt;</span> abs(d[<span style="color: #de935f; font-weight: bold;">2</span>])
+        <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">return</span> SVector(sign(d[<span style="color: #de935f; font-weight: bold;">1</span>]), <span style="color: #de935f; font-weight: bold;">0.0</span>)
+    <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">elseif</span> abs(d[<span style="color: #de935f; font-weight: bold;">2</span>]) <span style="color: #f0c674;">&gt;</span> abs(d[<span style="color: #de935f; font-weight: bold;">1</span>])
+        <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">return</span> SVector(<span style="color: #de935f; font-weight: bold;">0.0</span>, sign(d[<span style="color: #de935f; font-weight: bold;">2</span>]))
+    <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">else</span>
+        <span style="color: var(--clr-comment-delimiter); background-color: var(--bg-comment-delimiter);"># </span><span style="color: var(--clr-comment); background-color: var(--bg-comment);">Subgradient: pick any valid direction; here we average the two</span>
+        <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">return</span> normalize(SVector(sign(d[<span style="color: #de935f; font-weight: bold;">1</span>]), sign(d[<span style="color: #de935f; font-weight: bold;">2</span>])))
+    <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
+
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">function</span> <span style="color: var(--function-clr-name); background-color: var(--function-bg-name);">sdf_L_grad</span>(x<span style="color: #f0c674;">::SVector</span>{<span style="color: #de935f; font-weight: bold;">2</span>})
+    f1 = sdf_square(x, <span style="color: #de935f; font-weight: bold;">1.0</span>, SVector(<span style="color: #de935f; font-weight: bold;">0.0</span>, <span style="color: #de935f; font-weight: bold;">0.0</span>))
+    f2 = <span style="color: #f0c674;">-</span>sdf_square(x, <span style="color: #de935f; font-weight: bold;">1.0</span>, SVector(<span style="color: #de935f; font-weight: bold;">1.0</span>, <span style="color: #de935f; font-weight: bold;">1.0</span>))
+
+    <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">if</span> f1 <span style="color: #f0c674;">&gt;</span> f2
+        <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">return</span> sdf_square_grad(x, <span style="color: #de935f; font-weight: bold;">1.0</span>, SVector(<span style="color: #de935f; font-weight: bold;">0.0</span>, <span style="color: #de935f; font-weight: bold;">0.0</span>))
+    <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">elseif</span> f2 <span style="color: #f0c674;">&gt;</span> f1
+        <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">return</span> <span style="color: #f0c674;">-</span>sdf_square_grad(x, <span style="color: #de935f; font-weight: bold;">1.0</span>, SVector(<span style="color: #de935f; font-weight: bold;">1.0</span>, <span style="color: #de935f; font-weight: bold;">1.0</span>))  <span style="color: var(--clr-comment-delimiter); background-color: var(--bg-comment-delimiter);"># </span><span style="color: var(--clr-comment); background-color: var(--bg-comment);">negative because of the minus</span>
+    <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">else</span>
+        <span style="color: var(--clr-comment-delimiter); background-color: var(--bg-comment-delimiter);"># </span><span style="color: var(--clr-comment); background-color: var(--bg-comment);">Subgradient &#8212; average of both directions</span>
+        g1 = sdf_square_grad(x, <span style="color: #de935f; font-weight: bold;">1.0</span>, SVector(<span style="color: #de935f; font-weight: bold;">0.0</span>, <span style="color: #de935f; font-weight: bold;">0.0</span>))
+        g2 = <span style="color: #f0c674;">-</span>sdf_square_grad(x, <span style="color: #de935f; font-weight: bold;">1.0</span>, SVector(<span style="color: #de935f; font-weight: bold;">1.0</span>, <span style="color: #de935f; font-weight: bold;">1.0</span>))
+        <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">return</span> normalize(g1 <span style="color: #f0c674;">+</span> g2)
+    <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span>
+</pre>
+</div></div>
+</div>
+</div>
+</div>
+<div id="outline-container-orgc89c76d" class="outline-2">
+<h2 id="orgc89c76d"><span class="section-number-2">6.</span> Results</h2>
+<div class="outline-text-2" id="text-6">
+<div class='org-src-wrapper'>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_a6b25896a03e4d8b947de1d1513b879f>&#10697;</button>
+<script type='text/javascript'>
+var copyBtnbtn_a6b25896a03e4d8b947de1d1513b879f=document.querySelector('button[name=btn_a6b25896a03e4d8b947de1d1513b879f]');
+copyBtnbtn_a6b25896a03e4d8b947de1d1513b879f.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`using Revise\nincludet(\"src/pdesolver.jl\")\nincludet(\"src/domains.jl\")\n`);copyBtnbtn_a6b25896a03e4d8b947de1d1513b879f.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_a6b25896a03e4d8b947de1d1513b879f.innerHTML = '&#10697;'}, 3000);
+});
+</script>
+</div><div class="org-src-container">
+<pre class="src src-julia"><span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> Revise
+includet(<span style="color: var(--clr-string); background-color: var(--bg-string);">"src/pdesolver.jl"</span>)
+includet(<span style="color: var(--clr-string); background-color: var(--bg-string);">"src/domains.jl"</span>)
+</pre>
+</div></div>
+
+<div class='org-src-wrapper'>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_64ce1c5850354b78bea365459e008fe6>&#10697;</button>
+<script type='text/javascript'>
+var copyBtnbtn_64ce1c5850354b78bea365459e008fe6=document.querySelector('button[name=btn_64ce1c5850354b78bea365459e008fe6]');
+copyBtnbtn_64ce1c5850354b78bea365459e008fe6.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`using .PDESolvers\nusing .Domains\n`);copyBtnbtn_64ce1c5850354b78bea365459e008fe6.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_64ce1c5850354b78bea365459e008fe6.innerHTML = '&#10697;'}, 3000);
+});
+</script>
+</div><div class="org-src-container">
+<pre class="src src-julia"><span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> .PDESolvers
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> .Domains
+</pre>
+</div></div>
+
+<div class='org-src-wrapper'>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_f30624c39e0c4cdc96871350f8510b6e>&#10697;</button>
+<script type='text/javascript'>
+var copyBtnbtn_f30624c39e0c4cdc96871350f8510b6e=document.querySelector('button[name=btn_f30624c39e0c4cdc96871350f8510b6e]');
+copyBtnbtn_f30624c39e0c4cdc96871350f8510b6e.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`S = PDESystem(k_gauss , ∇k_gauss , Δk_gauss , a, ∇a , f, g_D ,g_N , sdf_L , sdf_L_grad , sdf_β )\n`);copyBtnbtn_f30624c39e0c4cdc96871350f8510b6e.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_f30624c39e0c4cdc96871350f8510b6e.innerHTML = '&#10697;'}, 3000);
+});
+</script>
+</div><div class="org-src-container">
+<pre class="src src-julia">S = PDESystem(k_gauss , &#8711;k_gauss , &#916;k_gauss , a, &#8711;a , f, g_D ,g_N , sdf_L , sdf_L_grad , sdf_&#946; )
+</pre>
+</div></div>
+
+<pre class="example">
+PDESystem(Main.k_gauss, Main.∇k_gauss, Main.Δk_gauss, Main.a, Main.∇a, Main.f, Main.g_D, Main.g_N, Main.Domains.sdf_L, Main.Domains.sdf_L_grad, Main.Domains.sdf_β)
+</pre>
+
+
+
+
+
+
+<div class='org-src-wrapper'>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_a4b2cc2a7f2e4873a55dd34913256f91>&#10697;</button>
+<script type='text/javascript'>
+var copyBtnbtn_a4b2cc2a7f2e4873a55dd34913256f91=document.querySelector('button[name=btn_a4b2cc2a7f2e4873a55dd34913256f91]');
+copyBtnbtn_a4b2cc2a7f2e4873a55dd34913256f91.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`using Random\nusing CUDA\ndev = CUDA.functional() ? cu : Array\nrng = MersenneTwister(0)\nr = 0:0.2:1.99\nN = unit_box_normals.(r)\nN = reduce(hcat , N) |> dev\nX_N = unit_box_path.(r)\nX_N = reduce(hcat , X_N)|> dev\nX_D = unit_box_path.(2:0.1:4)\nX_D = reduce(hcat , X_D) |> dev\nX_L = rand(rng , Float64, 2,100) |> dev\n\n`);copyBtnbtn_a4b2cc2a7f2e4873a55dd34913256f91.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_a4b2cc2a7f2e4873a55dd34913256f91.innerHTML = '&#10697;'}, 3000);
+});
+</script>
+</div><div class="org-src-container">
+<pre class="src src-julia"><span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> Random
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> CUDA
+dev = CUDA.functional() <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">?</span> cu <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">:</span> Array
+rng = MersenneTwister(<span style="color: #de935f; font-weight: bold;">0</span>)
+r = <span style="color: #de935f; font-weight: bold;">0</span>:<span style="color: #de935f; font-weight: bold;">0.2</span>:<span style="color: #de935f; font-weight: bold;">1.99</span>
+N = unit_box_normals.(r)
+N = reduce(hcat , N) <span style="color: #f0c674;">|&gt;</span> dev
+X_N = unit_box_path.(r)
+X_N = reduce(hcat , X_N)<span style="color: #f0c674;">|&gt;</span> dev
+X_D = unit_box_path.(<span style="color: #de935f; font-weight: bold;">2</span>:<span style="color: #de935f; font-weight: bold;">0.1</span>:<span style="color: #de935f; font-weight: bold;">4</span>)
+X_D = reduce(hcat , X_D) <span style="color: #f0c674;">|&gt;</span> dev
+X_L = rand(rng , Float64, <span style="color: #de935f; font-weight: bold;">2</span>,<span style="color: #de935f; font-weight: bold;">100</span>) <span style="color: #f0c674;">|&gt;</span> dev
+
+</pre>
+</div></div>
+
+
+<div class='org-src-wrapper'>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_999bf8df05ce4db58e78aa0ec1fd13e3>&#10697;</button>
+<script type='text/javascript'>
+var copyBtnbtn_999bf8df05ce4db58e78aa0ec1fd13e3=document.querySelector('button[name=btn_999bf8df05ce4db58e78aa0ec1fd13e3]');
+copyBtnbtn_999bf8df05ce4db58e78aa0ec1fd13e3.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`using LaTeXStrings\nusing Makie\nusing GLMakie\nfig = Figure()\nax = Axis(fig[1,1] , title=\"Collocation Points\")\n\nscatter!(ax,X_L |> Array, label=\"Data Points\")\nscatter!(ax,X_D|> Array, label=\"Dirichlet Points\")\nscatter!(ax,X_N |> Array, label=\"Neumann Points\")\narrows!(ax,X_N[1,:]|> Array , X_N[2,:] |> Array, N[1,:] |> Array, N[2,:] |> Array, lengthscale=0.1)\naxislegend(ax , position=:lt)\nsave(\"images/collocation-points.png\",fig )\n`);copyBtnbtn_999bf8df05ce4db58e78aa0ec1fd13e3.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_999bf8df05ce4db58e78aa0ec1fd13e3.innerHTML = '&#10697;'}, 3000);
+});
+</script>
+</div><div class="org-src-container">
+<pre class="src src-julia" id="orgc19600c"><span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> LaTeXStrings
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> Makie
+<span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> GLMakie
+fig = Figure()
+ax = Axis(fig[<span style="color: #de935f; font-weight: bold;">1</span>,<span style="color: #de935f; font-weight: bold;">1</span>] , title=<span style="color: var(--clr-string); background-color: var(--bg-string);">"Collocation Points"</span>)
+
+scatter!(ax,X_L <span style="color: #f0c674;">|&gt;</span> Array, label=<span style="color: var(--clr-string); background-color: var(--bg-string);">"Data Points"</span>)
+scatter!(ax,X_D<span style="color: #f0c674;">|&gt;</span> Array, label=<span style="color: var(--clr-string); background-color: var(--bg-string);">"Dirichlet Points"</span>)
+scatter!(ax,X_N <span style="color: #f0c674;">|&gt;</span> Array, label=<span style="color: var(--clr-string); background-color: var(--bg-string);">"Neumann Points"</span>)
+arrows!(ax,X_N[<span style="color: #de935f; font-weight: bold;">1</span>,:]<span style="color: #f0c674;">|&gt;</span> Array , X_N[<span style="color: #de935f; font-weight: bold;">2</span>,:] <span style="color: #f0c674;">|&gt;</span> Array, N[<span style="color: #de935f; font-weight: bold;">1</span>,:] <span style="color: #f0c674;">|&gt;</span> Array, N[<span style="color: #de935f; font-weight: bold;">2</span>,:] <span style="color: #f0c674;">|&gt;</span> Array, lengthscale=<span style="color: #de935f; font-weight: bold;">0.1</span>)
+axislegend(ax , position=<span style="color: #de935f;">:lt</span>)
+save(<span style="color: var(--clr-string); background-color: var(--bg-string);">"images/collocation-points.png"</span>,fig )
+</pre>
+</div></div>
+
+
+<div id="orgf40e127" class="figure">
+<p><img src="images/collocation-points.png" alt="collocation-points.png" />
+</p>
+</div>
+
+<div class='org-src-wrapper'>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_18d0816959a944629d3f8ac85a32dee1>&#10697;</button>
+<script type='text/javascript'>
+var copyBtnbtn_18d0816959a944629d3f8ac85a32dee1=document.querySelector('button[name=btn_18d0816959a944629d3f8ac85a32dee1]');
+copyBtnbtn_18d0816959a944629d3f8ac85a32dee1.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`using LinearAlgebra\nsolution = solve(S ,X_col)\n`);copyBtnbtn_18d0816959a944629d3f8ac85a32dee1.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_18d0816959a944629d3f8ac85a32dee1.innerHTML = '&#10697;'}, 3000);
+});
+</script>
+</div><div class="org-src-container">
+<pre class="src src-julia"><span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> LinearAlgebra
+solution = solve(S ,X_col)
+</pre>
+</div></div>
+
+<pre class="example">
+julia-async:55c26c34-42e8-471b-ac5f-c9f5b0baccec
+</pre>
+
+
+<div class='org-src-wrapper'>
+<div class='org-src-bar'><span class='srcLangLabel'>JULIA</span><button class='copyBtn' name=btn_648505214e654e92b7a22c4a535c23d9>&#10697;</button>
+<script type='text/javascript'>
+var copyBtnbtn_648505214e654e92b7a22c4a535c23d9=document.querySelector('button[name=btn_648505214e654e92b7a22c4a535c23d9]');
+copyBtnbtn_648505214e654e92b7a22c4a535c23d9.addEventListener('click', function(event) {
+let res = copyTextToClipboard(`using GLMakie\nX = range(-2 , 2 , 100)\nY = range(-2 , 2 , 100)\ngrid = [ [x,y] for x in X , y in Y]\ngrid = reduce(vcat , grid)\ngrid = reshape(grid, 2,:)\nfig = Figure()\nax = Axis(fig[1,1])\nsol = solution(grid)\nsol = reshape(sol , size(X,1) , :)\nhm = heatmap!(ax , X,Y, sol)\nColorbar(fig[:, end+1], hm)\nsave(\"images/solution.png\",fig )\n`);copyBtnbtn_648505214e654e92b7a22c4a535c23d9.innerHTML = res ? '&#10003;' : 'error';setTimeout(() => { copyBtnbtn_648505214e654e92b7a22c4a535c23d9.innerHTML = '&#10697;'}, 3000);
+});
+</script>
+</div><div class="org-src-container">
+<pre class="src src-julia" id="org9f3eaac"><span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">using</span> GLMakie
+X = range(<span style="color: #f0c674;">-</span><span style="color: #de935f; font-weight: bold;">2</span> , <span style="color: #de935f; font-weight: bold;">2</span> , <span style="color: #de935f; font-weight: bold;">100</span>)
+Y = range(<span style="color: #f0c674;">-</span><span style="color: #de935f; font-weight: bold;">2</span> , <span style="color: #de935f; font-weight: bold;">2</span> , <span style="color: #de935f; font-weight: bold;">100</span>)
+grid = [ [x,y] <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">for</span> x in X , y <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">in</span> Y]
+grid = reduce(vcat , grid)
+grid = reshape(grid, <span style="color: #de935f; font-weight: bold;">2</span>,:)
+fig = Figure()
+ax = Axis(fig[<span style="color: #de935f; font-weight: bold;">1</span>,<span style="color: #de935f; font-weight: bold;">1</span>])
+sol = solution(grid)
+sol = reshape(sol , size(X,<span style="color: #de935f; font-weight: bold;">1</span>) , :)
+hm = heatmap!(ax , X,Y, sol)
+Colorbar(fig[:, <span style="color: var(--clr-keyword); background-color: var(--bg-keyword);">end</span><span style="color: #f0c674;">+</span><span style="color: #de935f; font-weight: bold;">1</span>], hm)
+save(<span style="color: var(--clr-string); background-color: var(--bg-string);">"images/solution.png"</span>,fig )
+</pre>
+</div></div>
+
+
+<div id="orgd3808e5" class="figure">
+<p><img src="images/solution.png" alt="solution.png" />
+</p>
+</div>
 </div>
 </div>
 </div>
