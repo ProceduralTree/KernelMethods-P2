@@ -1,5 +1,3 @@
-# Solver
-
  ; module PDESolvers
 using SparseArrays
 using IterativeSolvers
@@ -11,7 +9,7 @@ using .Kernel
 using KernelAbstractions
 using LinearAlgebra;
 
-
+# Solver
 
 # #+RESULTS:
 
@@ -52,7 +50,7 @@ function solve(S, X_col)
     sys_matrix! = system_matrix!( dev , 256 , size(K))
     sys_matrix!(K ,X_col , S.a , S.∇a , S.k , S.∇k , S.Δk , S.sdf , S.grad_sdf , S.sdf_beta  )
     B = get_boundary(S,X_col)
-    α = lsqr(K,B)
+    α = K \ B
     return (PDESolver(S,X_col ,α) , K)
     end
 
