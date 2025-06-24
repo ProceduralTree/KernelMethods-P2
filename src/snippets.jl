@@ -95,43 +95,67 @@ spkernel = sparse_kernel(CPU() , 256 , size(K))
 spkernel(K);
 
 # Kernel Implementation
+# As kernels we use Radial Basis Kernels (RBF) \(k(x,x') := \phi (\frac{\|x-x'\|}{\gamma})\). That consist of a radial basis function \(\phi \) as well as a scaling factor \(\gamma \)
 # where \(\nabla_x , \Delta_x\) are the partial gradients and laplacians with respect to the second argument of \(k(x_j, \cdot )\).
-# for a radial basis function \(\phi (r^2) \in  C^2(\RR)\)  and a corresponding RBF kernel \(k(x,x') := \phi (\frac{\|x-x'\|}{\gamma})\) they can be computed trivially
+# for a radial basis function \(\phi (r^2) \in  C^2(\RR)\)  and a corresponding RBF kernel  they can be computed trivially
 # \begin{align}
 # \label{eq:2}
 # \nabla_x k(x',x) &= \phi'\left(\frac{\|x - x'\|}{\gamma}\right) \cdot \frac{x - x'}{\gamma\|x - x'\|} \\
-# \Delta_x k(x',x) &= \frac{1}{\gamma^2} \phi''\left(\frac{\|x - x'\|}{\gamma}\right) + \frac{1}{\gamma^{4}} \frac{d - 1}{\|x - x'\|} \cdot \phi'\left(\frac{\|x - x'\|}{\gamma}\right)
+# \Delta_x k(x',x) &= \frac{1}{\gamma^2} \phi''\left(\frac{\|x - x'\|}{\gamma}\right) + \frac{1}{\gamma^{2}} \frac{d - 1}{\|x - x'\|} \cdot \phi'\left(\frac{\|x - x'\|}{\gamma}\right)
 # \end{align}
 # where \(d\) is the dimension of \(x\)
 
  ; using StaticArrays
-function k(ϕ::Function , γ,x̂::SVector{N} ,x::SVector{N}) where N
-    r = norm(x-x̂̂)/γ
+@inline function k(ϕ::Function , ::Val{γ},x̂::SVector{N} ,x::SVector{N}) where {N , γ , RBFType}
+    r = max(1e-15,norm(x-x̂)/γ)
     ϕ(r)
     end
-function ∇k(dϕ::Function , γ ,x̂::SVector{N} ,x::SVector{N}) where N
-    r = norm(x-x̂̂)/γ
-    2*(x-x̂)/r*dϕ(r)
+@inline function ∇k(dϕ::Function , ::Val{γ} ,x̂::SVector{N} ,x::SVector{N}) where {N , γ , dRBFType}
+    r = max(1e-15,norm(x-x̂)/γ)
+    (x-x̂)*dϕ(r) *  1/(r*γ^2)
     end
-function Δk(d²ϕ::Function, γ , dϕ::Function , x̂::SVector{N} ,x::SVector{N}) where N
-    r = norm(x-x̂̂)/γ
-    1/γ^2 * d²ϕ(r)  + 1/γ^2 * (N-1)/r*dϕ(r)
+@inline function Δk(d²ϕ::Function,  dϕ::Function , ::Val{γ} ,x̂::SVector{N} ,x::SVector{N}) where {N , γ , ddRBFType}
+    r = max(1e-15,norm(x-x̂)/γ)
+    1/γ^2 * d²ϕ(r)  +  1/γ^2 * (N-1)/r *dϕ(r)
+    end;
+
+# squared rbf
+# for a squared RBF the kernels are simpler. and non singular
+# \begin{align}
+# \label{eq:sqr-rbf}
+# \nabla_x k(x',x) &= \phi'\left(\frac{r^2}{\gamma^2}\right) \cdot \frac{x - x'}{\gamma} \\
+# \Delta_x k(x',x) &= \frac{1}{\gamma^2} \phi''\left(\frac{\|x - x'\|}{\gamma}\right) + \frac{1}{\gamma^{2}} \frac{d - 1}{\|x - x'\|} \cdot \phi'\left(\frac{\|x - x'\|}{\gamma}\right)
+# \end{align}
+
+ ; using StaticArrays
+using LinearAlgebra
+@inline function ksq(ϕ::RBFType , ::Val{γ},x̂::SVector{N} ,x::SVector{N}) where {N , γ , RBFType}
+    r = dot(x-x̂,x-x̂)/γ^2
+    ϕ(r)
+    end
+@inline function ∇ksq(dϕ::dRBFType , ::Val{γ} ,x̂::SVector{N} ,x::SVector{N}) where {N , γ , dRBFType}
+    r = dot(x-x̂,x-x̂)/γ^2
+    2/γ^2*(x-x̂)*dϕ(r)
+    end
+@inline function Δksq(d²ϕ::ddRBFType,  dϕ::Function , ::Val{γ} ,x̂::SVector{N} ,x::SVector{N}) where {N , γ , ddRBFType}
+    r = dot(x-x̂,x-x̂)/γ^2
+    1/γ^2 * (4*r * d²ϕ(r)  +  2*N*dϕ(r))
     end;
 
 
 
 # #+RESULTS:
-# : dd_rbf_gaussian (generic function with 3 methods)
+# : dd_rbf_gaussian (generic function with 1 method)
 
 
  ; using GLMakie
-X = range(-5 , 5 , 100)
+X = range(-2 , 2 , 100)
 Y = range(-5 , 5 , 100)
 using LinearAlgebra
 
 fig = Figure()
 ax = Axis(fig[1,1])
-lines!(X , x->rbf_gaussian(x))
+lines!(X , x->rbf_gaussian(x^2))
 save("images/gauss-rbf.png",fig );
 
 # Cardinal B_{3} Spline
@@ -227,13 +251,19 @@ save("images/plate-spline.png",fig );
 # PDE
 
  ; using Revise
+using LinearAlgebra
 includet("src/pdesolver.jl")
 includet("src/domains.jl")
 using .PDESolvers
 using .Domains;
 
-# Result
-
+# PDE Poisson
+# with \(a(x) = 1 , g_{D}(x) = 0\) and \(\Gamma_{N} = \emptyset \) this method is able to model the poisson equation
+# \begin{align}
+# \label{eq:poisson}
+# - \Delta u(x) &= f(x) & \text{in} \quad \Omega \\
+# u(x) &= 0 & \text{on} \quad  \Gamma_D
+# \end{align}
 
  ; using StaticArrays
 function domain(x::SVector{2})
@@ -252,10 +282,33 @@ f(x::SVector{2}) =2 * (x[1]+x[2] - x[1]^2 - x[2]^2)
 g_D(x::SVector{2})= 0
 g_N(x::SVector{2} , n::SVector{2}) = 0;
 
- ; γ = 100.
-k_gauss(x,y) = k( rbf ,γ, x,y)
-∇k_gauss(x,y) =∇k(d_rbf,γ , x,y)
-Δk_gauss(x,y) = Δk(dd_rbf,γ , d_rbf, x,y)
+ ; using CUDA
+dev = CUDA.functional() ? cu : Array
+#dev = Array
+X = range(0 , 1 , 20)
+Y = range(0 , 1 , 20)
+X_col = [ [x,y] for x in X , y in Y]
+X_col = reduce(vcat ,X_col )
+X_col = reshape(X_col, 2,:) |> dev
+X_t = range(0 , 1 , 100)
+Y_t = range(0 , 1 , 100)
+X_test = [ [x,y] for x in X_t , y in Y_t]
+X_test = reduce(vcat , X_test)
+X_test = reshape(X_test, 2,:) |> dev
+X_lol = rand(2,400) |> dev
+
+
+size(X_col);
+
+# Result
+
+
+
+
+ ; γ = 0.01
+@inline k_gauss(x,y) = @inline ksq( rbf_gaussian ,Val(0.1), x,y)
+@inline ∇k_gauss(x,y) =@inline ∇ksq(d_rbf_gaussian,Val(0.1) , x,y)
+@inline Δk_gauss(x,y) =@inline Δksq(dd_rbf_gaussian , d_rbf_gaussian ,Val(0.1), x,y)
 S_gauss = PDESystem(k_gauss , ∇k_gauss , Δk_gauss , a, ∇a , f, g_D ,g_N , domain , ∇domain , sdf_β );
 
  ; k_plate(x,y) = k(thin_plate ,γ , x,y)
@@ -265,44 +318,27 @@ S_plate = PDESystem(k_plate , ∇k_plate , Δk_plate , a, ∇a , f, g_D ,g_N , d
 
  ; k_bspline(x,y) = k(B_3,γ , x,y)
 ∇k_bspline(x,y) =∇k(d_B_3,γ , x,y)
-Δk_bspline(x,y) = Δk(dd_B_3,γ , d_B_3 , x,y)
+Δk_bspline(x,y) = Δk(dd_B_3, d_B_3, γ , x,y)
 S_bspline = PDESystem(k_bspline , ∇k_bspline , Δk_bspline , a, ∇a , f, g_D ,g_N , domain , ∇domain , sdf_β );
 
- ; X = range(0 , 1 , 40)
-Y = range(0 , 1 , 40)
-X_col = [ [x,y] for x in X , y in Y]
-X_col = reduce(vcat ,X_col )
-X_col = reshape(X_col, 2,:)
-X_t = range(0 , 1 , 100)
-Y_t = range(0 , 1 , 100)
-X_test = [ [x,y] for x in X_t , y in Y_t]
-X_test = reduce(vcat , X_test)
-X_test = reshape(X_test, 2,:)
-size(X_col);
-
-
-
-# #+RESULTS:
-# : (2 1600)
-
-
  ; using LinearAlgebra
-solution , K = solve(S_gauss ,X_col)
-cond(K);
+solution , K = solve(S_gauss ,X_lol);
+#cond(K)
+;
 
 
 
 # #+RESULTS:
-# : julia-async:04fba19e-2cf6-489d-b224-77764e3aaa24
+
 
 
 # #+name: fig:solution
 
  ; using GLMakie
 fig = Figure()
-ax = Axis(fig[1,1] , title="Aproximate solution")
-sol , K = solution(X_test)
-sol = reshape(sol , size(X_t,1) , :)
+ax = Axis(fig[1,1] , title="Aproximate solution", aspect=DataAspect())
+sol , K_t = solution(X_test)
+sol = reshape(Array(sol) , size(X_t,1) , :)
 hm = heatmap!(ax , X,Y, sol)
 Colorbar(fig[:, end+1], hm)
 save("images/solution.png",fig );
@@ -318,7 +354,7 @@ save("images/solution.png",fig );
 u(x , y) = x * (1-x) * y* ( 1- y)
 u(x) = u(x[1] , x[2])
 fig = Figure()
-ax = Axis(fig[1,1])
+ax = Axis(fig[1,1] , title="Exact sollution" , aspect=DataAspect())
 
 hm = heatmap!(ax,X_t,Y_t,u)
 Colorbar(fig[:, end+1], hm)
@@ -331,7 +367,7 @@ save("images/exact-solution.png",fig );
 
 
  ; sol , _ = solution(X_test)
-norm(sol - u.(eachcol(X_test)) , Inf);
+norm(Array(sol) - u.(eachcol(Array(X_test))) , Inf);
 
 # Result
 # where

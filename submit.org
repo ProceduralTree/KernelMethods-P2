@@ -279,7 +279,7 @@ function solve(S, X_col)
     sys_matrix! = system_matrix!( dev , 256 , size(K))
     sys_matrix!(K ,X_col , S.a , S.∇a , S.k , S.∇k , S.Δk , S.sdf , S.grad_sdf , S.sdf_beta  )
     B = get_boundary(S,X_col)
-    α = lsqr(K,B)
+    α = K \ B
     return (PDESolver(S,X_col ,α) , K)
     end
 
@@ -313,22 +313,22 @@ for a radial basis function \(\phi (r^2) \in  C^2(\RR)\)  and a corresponding RB
 where \(d\) is the dimension of \(x\)
 #+begin_src julia
 using StaticArrays
-function k(ϕ::Function , γ,x̂::SVector{N} ,x::SVector{N}) where N
+@inline function k(ϕ::Function , ::Val{γ},x̂::SVector{N} ,x::SVector{N}) where {N , γ , RBFType}
     r = max(1e-15,norm(x-x̂)/γ)
     ϕ(r)
     end
-function ∇k(dϕ::Function , γ ,x̂::SVector{N} ,x::SVector{N}) where N
+@inline function ∇k(dϕ::Function , ::Val{γ} ,x̂::SVector{N} ,x::SVector{N}) where {N , γ , dRBFType}
     r = max(1e-15,norm(x-x̂)/γ)
     (x-x̂)*dϕ(r) *  1/(r*γ^2)
     end
-function Δk(d²ϕ::Function,  dϕ::Function , γ ,x̂::SVector{N} ,x::SVector{N}) where N
+@inline function Δk(d²ϕ::Function,  dϕ::Function , ::Val{γ} ,x̂::SVector{N} ,x::SVector{N}) where {N , γ , ddRBFType}
     r = max(1e-15,norm(x-x̂)/γ)
     1/γ^2 * d²ϕ(r)  +  1/γ^2 * (N-1)/r *dϕ(r)
     end
 #+end_src
 
 #+RESULTS:
-: Δk (generic function with 2 methods)
+: Δk (generic function with 1 method)
 ** squared rbf
 for a squared RBF the kernels are simpler. and non singular
 \begin{align}
@@ -338,15 +338,16 @@ for a squared RBF the kernels are simpler. and non singular
 \end{align}
 #+begin_src julia
 using StaticArrays
-function ksq(ϕ::Function , γ,x̂::SVector{N} ,x::SVector{N}) where N
+using LinearAlgebra
+@inline function ksq(ϕ::RBFType , ::Val{γ},x̂::SVector{N} ,x::SVector{N}) where {N , γ , RBFType}
     r = dot(x-x̂,x-x̂)/γ^2
     ϕ(r)
     end
-function ∇ksq(dϕ::Function , γ ,x̂::SVector{N} ,x::SVector{N}) where N
+@inline function ∇ksq(dϕ::dRBFType , ::Val{γ} ,x̂::SVector{N} ,x::SVector{N}) where {N , γ , dRBFType}
     r = dot(x-x̂,x-x̂)/γ^2
     2/γ^2*(x-x̂)*dϕ(r)
     end
-function Δksq(d²ϕ::Function,  dϕ::Function , γ ,x̂::SVector{N} ,x::SVector{N}) where N
+@inline function Δksq(d²ϕ::ddRBFType,  dϕ::Function , ::Val{γ} ,x̂::SVector{N} ,x::SVector{N}) where {N , γ , ddRBFType}
     r = dot(x-x̂,x-x̂)/γ^2
     1/γ^2 * (4*r * d²ϕ(r)  +  2*N*dϕ(r))
     end
@@ -358,13 +359,13 @@ function Δksq(d²ϕ::Function,  dϕ::Function , γ ,x̂::SVector{N} ,x::SVector
 ** Gauss
 #+begin_src julia :tangle src/gauss_kernel.jl
 using StaticArrays
-function rbf_gaussian(r)
+@inline function rbf_gaussian(r)
     exp(-r)
     end
-function d_rbf_gaussian(r)
+@inline function d_rbf_gaussian(r)
     -exp(-r)
     end
-function dd_rbf_gaussian(r)
+@inline function dd_rbf_gaussian(r)
     exp(-r)
     end
 #+end_src
@@ -486,6 +487,7 @@ save("images/plate-spline.png",fig )
 * PDE
 #+begin_src julia
 using Revise
+using LinearAlgebra
 includet("src/pdesolver.jl")
 includet("src/domains.jl")
 using .PDESolvers
@@ -521,30 +523,36 @@ g_N(x::SVector{2} , n::SVector{2}) = 0
 #+end_src
 
 #+begin_src julia
-X = range(0 , 1 , 10)
-Y = range(0 , 1 , 10)
+using CUDA
+dev = CUDA.functional() ? cu : Array
+#dev = Array
+X = range(0 , 1 , 20)
+Y = range(0 , 1 , 20)
 X_col = [ [x,y] for x in X , y in Y]
 X_col = reduce(vcat ,X_col )
-X_col = reshape(X_col, 2,:)
+X_col = reshape(X_col, 2,:) |> dev
 X_t = range(0 , 1 , 100)
 Y_t = range(0 , 1 , 100)
 X_test = [ [x,y] for x in X_t , y in Y_t]
 X_test = reduce(vcat , X_test)
-X_test = reshape(X_test, 2,:)
+X_test = reshape(X_test, 2,:) |> dev
+X_lol = rand(2,400) |> dev
+
+
 size(X_col)
 #+end_src
 
 #+RESULTS:
-: (2 100)
+: (2 400)
 *** Result
 
 
 
 #+begin_src julia :results silent
-γ = 1000.
-k_gauss(x,y) = ksq( rbf_gaussian ,γ, x,y)
-∇k_gauss(x,y) =∇ksq(d_rbf_gaussian,γ , x,y)
-Δk_gauss(x,y) = Δksq(dd_rbf_gaussian , d_rbf_gaussian ,γ, x,y)
+γ = 0.01
+@inline k_gauss(x,y) = @inline ksq( rbf_gaussian ,Val(0.1), x,y)
+@inline ∇k_gauss(x,y) =@inline ∇ksq(d_rbf_gaussian,Val(0.1) , x,y)
+@inline Δk_gauss(x,y) =@inline Δksq(dd_rbf_gaussian , d_rbf_gaussian ,Val(0.1), x,y)
 S_gauss = PDESystem(k_gauss , ∇k_gauss , Δk_gauss , a, ∇a , f, g_D ,g_N , domain , ∇domain , sdf_β )
 #+end_src
 
@@ -567,21 +575,22 @@ S_bspline = PDESystem(k_bspline , ∇k_bspline , Δk_bspline , a, ∇a , f, g_D 
 
 #+begin_src julia
 using LinearAlgebra
-solution , K = solve(S_gauss ,X_col)
-cond(K)
+solution , K = solve(S_gauss ,X_lol);
+#cond(K)
+
 #+end_src
 
 #+RESULTS:
-: 7.449443f14
+
 
 
 #+name: fig:solution
 #+begin_src julia :results file graphics :file "images/solution.png"
 using GLMakie
 fig = Figure()
-ax = Axis(fig[1,1] , title="Aproximate solution")
+ax = Axis(fig[1,1] , title="Aproximate solution", aspect=DataAspect())
 sol , K_t = solution(X_test)
-sol = reshape(sol , size(X_t,1) , :)
+sol = reshape(Array(sol) , size(X_t,1) , :)
 hm = heatmap!(ax , X,Y, sol)
 Colorbar(fig[:, end+1], hm)
 save("images/solution.png",fig )
@@ -596,7 +605,7 @@ using GLMakie
 u(x , y) = x * (1-x) * y* ( 1- y)
 u(x) = u(x[1] , x[2])
 fig = Figure()
-ax = Axis(fig[1,1])
+ax = Axis(fig[1,1] , title="Exact sollution" , aspect=DataAspect())
 
 hm = heatmap!(ax,X_t,Y_t,u)
 Colorbar(fig[:, end+1], hm)
@@ -608,11 +617,11 @@ save("images/exact-solution.png",fig )
 
 #+begin_src julia
 sol , _ = solution(X_test)
-norm(sol - u.(eachcol(X_test)) , Inf)
+norm(Array(sol) - u.(eachcol(Array(X_test))) , Inf)
 #+end_src
 
 #+RESULTS:
-: 0.027138303965330124
+: 0.00085476646f0
 
 ** Diffusion PDE
 

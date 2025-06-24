@@ -1,4 +1,4 @@
-# Preamble
+# Preamble :noexport:
 
  ; 
 module Kernel
@@ -7,8 +7,30 @@ using KernelAbstractions
 using LinearAlgebra;
 
 # Regression Approach
-# given \( \hat{X}:=\left\{ x_j \right\}_{j=1}^n \subset\RR ^d\) we aim to find \(u_h(x) \in \mathcal{H}_{k}\) such that it satisfies \eqref{eq:pde} where
+# Aim of this excrcise is to find solutions \(u\in \mathcal{H}_k\) such that they satisfy the following system
 
+# \begin{align}
+# \label{eq:pde}
+# - \nabla \cdot   \left( a(x) \nabla u(x) \right) &= f(x) & \text{in} \quad \Omega \\
+# u(x) &= g_D(x) & \text{on} \quad  \Gamma_D \\
+# \left( a(x) \nabla u(x)  \right) \cdot  \vec{n}(x) &= g_N & \text{on} \quad \Gamma_N
+# \end{align}
+# we do this by projecting the system onto \(\mathcal{H}_k(\Omega)\)
+# \begin{align}
+# \label{eq:pde_proj}
+# \left<   - \nabla \cdot   \left( a(x) \nabla u(x) \right),\phi \right>&= \left< f(x) ,\phi  \right> & \text{in} \quad \Omega , \phi \in  \mathcal{H}_{k} \\
+# \left<   u(x) , \phi \right>&= \left< g_D(x) , \phi  \right> & \text{on} \quad  \Gamma_D \\
+# \left<   \left( a(x) \nabla u(x)  \right) \cdot  \vec{n}(x) , \phi \right>&= \left< g_N ,\phi  \right> & \text{on} \quad \Gamma_N
+# \end{align}
+# Let \( \hat{X}:=\left\{ x_j \right\}_{j=1}^n \subset\RR ^d\). Since \(\left\{ k(x_i,\cdot ) \right\}_{i=1}^n\) is a basis of \(\mathcal{H}_k\) it also has to hold
+# \begin{align}
+# \label{eq:pde_proj}
+# \left<   - \nabla \cdot   \left( a(x) \nabla u(x) \right),k(x_i,\cdot ) \right>&= \left< f(x) ,k(x_i,\cdot )  \right> & \text{in} \quad \Omega , x_i \in  X \\
+# \left<   u(x) , k(x_i,\cdot ) \right>&= \left< g_D(x) , k(x_i,\cdot )  \right> & \text{on} \quad  \Gamma_D \\
+# \left<   \left( a(x) \nabla u(x)  \right) \cdot  \vec{n}(x) , k(x_i,\cdot ) \right>&= \left< g_N , k(x_i , \cdot )  \right> & \text{on} \quad \Gamma_N
+# \end{align}
+# We assuming \(f,g_D , g_N(\cdot ,\vec{n}) \in  \mathcal{H}_k\) i.e. \(\left< f , k(x_i , \cdot ) \right> = f(x_i)\) etc. We search for a finite approximation \(u_h \approx u\)
+#  such that it satisfies \eqref{eq:pde_proj} where
 # \begin{align}
 # \label{eq:approx}
 # u_h(x) &= \sum_{j=1}^{n} a_j k(x_j,x)
@@ -16,37 +38,41 @@ using LinearAlgebra;
 # correspondingly we are able to directly compute
 
 # \begin{align*}
-# \nabla_x u(x) &= \sum_{j=1}^n a_j \nabla_x  k(x_j ,x) \\
-# - \nabla_x \cdot \left( a(x) \nabla_x u(x) \right) &= - \left< \nabla_x a(x) , \nabla_x u(x) \right> - a(x) \Delta_x u(x) \\
-# &=  - \sum_{j=1}^{n} a_j \left( \left< \nabla_x a(x) , \nabla_x k(x_j,x)  \right> + a(x) \Delta_x k(x_j,x)\right)
+# \nabla_x u_h(x) &= \sum_{j=1}^n a_j \nabla_x  k(x_j ,x) \\
+# - \nabla_x \cdot \left( a(x) \nabla_x u_h(x) \right) &= -  \nabla_x a(x) \cdot  \nabla_x u(x)  - a(x) \Delta_x u(x) \\
+# &=  - \sum_{j=1}^{n} a_j \left(  \nabla_x a(x) \cdot  \nabla_x k(x_j,x)   + a(x) \Delta_x k(x_j,x)\right)
 # \end{align*}
 # this leads to the following Linear system
 # \begin{align}
-# \label{eq:1}
-# K a &= f & x \in  \Omega
+# \label{eq:pde-sys}
+#  - \sum_{j=1}^{n} a_j \left(  \nabla_{x_i} a(x_i) \cdot  \nabla_{x_i} k(x_j,x_i)   + a(x_i) \Delta_{x_i} k(x_j,x_i)\right)&=  f(x_i)  & x_i\in  \Omega , x_i \in  X \\
+#  \sum_{j=1}^{n} a_j k(x_j,x_i)&=  g_D(x_i) & x_i\in   \Gamma_D \\
+# \sum_{j=1}^n  a_j \left( a(x_i) \nabla_{x_i}  k(x_j ,x_i) \cdot  n_i \right) &=  g_N(x_i , n_i) & x_i \in  \Gamma_N
 # \end{align}
-# where
+
+# this corresponds directly with the System Matrix \(K\), that we compute in julia using a GPU copatible kernel that employs element wise notation
 
  ; 
-@kernel function system_matrix!(A ,@Const(X), a , ∇a ,k, ∇k, Δk  , sdf , grad_sdf , sdf_beta)
+@kernel function system_matrix!(K ,@Const(X), a , ∇a ,k, ∇k, Δk  , sdf , grad_sdf , sdf_beta)
     Iᵢⱼ =  @index(Global , Cartesian)
     @inbounds xᵢ= SVector{2}(view(X, : , Iᵢⱼ[1])) # Essentially X[:,i]
     @inbounds xⱼ= SVector{2}(view(X, : , Iᵢⱼ[2])) # Essentially X[:,j]
     # poisson equation
-    @inbounds A[Iᵢⱼ] = -a(xᵢ)*Δk(xᵢ,xⱼ)- ∇a(xᵢ)⋅∇k(xᵢ,xⱼ)
+    @inbounds K[Iᵢⱼ] = -a(xᵢ)*Δk(xᵢ,xⱼ)- ∇a(xᵢ)⋅∇k(xᵢ,xⱼ)
     if abs(sdf(xᵢ)) < 1e-10
         if sdf_beta(xᵢ) < 0
             # Neumann Boundary Condition
             @inbounds nᵢ= grad_sdf(xᵢ)
-            @inbounds A[Iᵢⱼ] = a(xᵢ) * (nᵢ ⋅ ∇k(xᵢ , xⱼ))
+            @inbounds K[Iᵢⱼ] = a(xᵢ) * (nᵢ ⋅ ∇k(xᵢ , xⱼ))
         else
           # Dirichlet Boundary
-          @inbounds A[Iᵢⱼ] =k(xᵢ , xⱼ)
+          @inbounds K[Iᵢⱼ] =k(xᵢ , xⱼ)
         end
     end
 end;
 
 # right hand side
+# The right hand side of the system is computed in a similar Fashion
 
  ; 
 @kernel function apply_function_colwise!(B ,@Const(X) , f , g_D , g_N , sdf  , grad_sdf, sdf_beta)

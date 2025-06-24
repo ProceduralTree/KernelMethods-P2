@@ -1,5 +1,3 @@
-# Preamble
-
  ; module Domains
 using StaticArrays
 using LinearAlgebra
