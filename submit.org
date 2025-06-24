@@ -333,8 +333,8 @@ using StaticArrays
 for a squared RBF the kernels are simpler. and non singular
 \begin{align}
 \label{eq:sqr-rbf}
-\nabla_x k(x',x) &= \phi'\left(\frac{r^2}{\gamma^2}\right) \cdot \frac{x - x'}{\gamma} \\
-\Delta_x k(x',x) &= \frac{1}{\gamma^2} \phi''\left(\frac{\|x - x'\|}{\gamma}\right) + \frac{1}{\gamma^{2}} \frac{d - 1}{\|x - x'\|} \cdot \phi'\left(\frac{\|x - x'\|}{\gamma}\right)
+\nabla_x k(x',x) &= \phi'\left(\frac{r^2}{\gamma}\right) \cdot \frac{x - x'}{\gamma} \\
+\Delta_x k(x',x) &= \frac{1}{\gamma } (4 * \frac{r^2}{\gamma^2} \phi''\left(\frac{r^2}{\gamma}\right) + 2d\phi'\left(\frac{r^2}{\gamma}\right))
 \end{align}
 #+begin_src julia
 using StaticArrays
@@ -397,31 +397,31 @@ B_{d}(r) = \sum_{n=0}^4 \frac{(-1)^n}{d!} \binom{d+1}{n} \left( r + \frac{d+1}{2
 function B_3(r)
 r_prime = r+2
     return 1/24 * (
-    1 *max(0, (r_prime - 0)^3)
-    -4*max(0, (r_prime - 1)^3)
-    +6*max(0, (r_prime - 2)^3)
-    -4*max(0, (r_prime - 3)^3)
-    +1*max(0, (r_prime - 4)^3)
+    1 *max(0, (r_prime - 0))^3
+    -4*max(0, (r_prime - 1))^3
+    +6*max(0, (r_prime - 2))^3
+    -4*max(0, (r_prime - 3))^3
+    +1*max(0, (r_prime - 4))^3
     )
 end
 function d_B_3(r)
 r_prime = r+2
-    return 1/24 * (
-    1 *max(0, 3*(r_prime - 0)^2)
-    -4*max(0, 3*(r_prime - 1)^2)
-    +6*max(0, 3*(r_prime - 2)^2)
-    -4*max(0, 3*(r_prime - 3)^2)
-    +1*max(0, 3*(r_prime - 4)^2)
+    return 1/8 * (
+    1 *max(0, (r_prime - 0))^2
+    -4*max(0, (r_prime - 1))^2
+    +6*max(0, (r_prime - 2))^2
+    -4*max(0, (r_prime - 3))^2
+    +1*max(0, (r_prime - 4))^2
     )
 end
 function dd_B_3(r)
 r_prime = r+2
-    return 1/24 * (
-    1 *max(0, 6*(r_prime - 0))
-    -4*max(0, 6*(r_prime - 1))
-    +6*max(0, 6*(r_prime - 2))
-    -4*max(0, 6*(r_prime - 3))
-    +1*max(0, 6*(r_prime - 4))
+    return 1/4 * (
+    1 *max(0, (r_prime - 0))
+    -4*max(0, (r_prime - 1))
+    +6*max(0, (r_prime - 2))
+    -4*max(0, (r_prime - 3))
+    +1*max(0, (r_prime - 4))
     )
 end
 
@@ -432,14 +432,17 @@ end
 #+name: fig:b-spline
 #+begin_src julia :results file graphics :file "images/b-spline.png"
 using GLMakie
+using LaTeXStrings
 X = range(-2 , 2 , 100)
 Y = range(-2 , 2 , 100)
 
 fig = Figure()
 ax = Axis(fig[1,1])
 
-lines!(ax , X , B_3)
-
+lines!(ax , X , B_3 , label=L"B_3")
+lines!(ax , X , d_B_3 , label=L"\partial B_3")
+lines!(ax , X , dd_B_3 , label=L"\partial^2 B_3")
+axislegend(ax)
 save("images/b-spline.png",fig )
 #+end_src
 
@@ -447,20 +450,24 @@ save("images/b-spline.png",fig )
 [[file:images/b-spline.png]]
 
 ** Thin Plate
+\begin{align*}
+T(r^2) &= \frac{1}{2}r\ln{r} \\
+T(r) &= r^2\ln{r}
+\end{align*}
 #+begin_src julia
 function thin_plate(r)
     r == 0.0 && return 0.0
-    return r^2 * log(r)
+    return 0.5* r *  log(r)
 end
 
 function d_thin_plate(r)
     r == 0.0 && return 0.0
-    return 2r * log(r) + r
+    return 0.5 * log(r) + 1
 end
 
 function dd_thin_plate(r)
     r == 0.0 && return 0.0
-    return 2 * log(r) + 3
+    return 0.5 * 1/r
 end
 #+end_src
 
@@ -557,14 +564,15 @@ S_gauss = PDESystem(k_gauss , ∇k_gauss , Δk_gauss , a, ∇a , f, g_D ,g_N , d
 #+end_src
 
 #+begin_src julia :results silent
-k_plate(x,y) = k(thin_plate ,γ , x,y)
-∇k_plate(x,y) =∇k(d_thin_plate ,γ , x,y)
-Δk_plate(x,y) = Δk(dd_thin_plate,γ  , d_thin_plate , x,y)
+k_plate(x,y) = ksq(thin_plate ,γ , x,y)
+∇k_plate(x,y) =∇ksq(d_thin_plate ,γ , x,y)
+Δk_plate(x,y) = Δksq(dd_thin_plate  , d_thin_plate ,γ, x,y)
 S_plate = PDESystem(k_plate , ∇k_plate , Δk_plate , a, ∇a , f, g_D ,g_N , domain , ∇domain , sdf_β )
 #+end_src
 
 
 #+begin_src julia :results silent
+γ = 0.05
 k_bspline(x,y) = k(B_3,γ , x,y)
 ∇k_bspline(x,y) =∇k(d_B_3,γ , x,y)
 Δk_bspline(x,y) = Δk(dd_B_3, d_B_3, γ , x,y)
