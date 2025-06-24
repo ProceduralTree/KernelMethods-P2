@@ -528,8 +528,8 @@ g_N(x::SVector{2} , n::SVector{2}) = 0
 #+end_src
 
 #+begin_src julia
-X = range(0 , 1 , 40)
-Y = range(0 , 1 , 40)
+X = range(0 , 1 , 100)
+Y = range(0 , 1 , 100)
 X_col = [ [x,y] for x in X , y in Y]
 X_col = reduce(vcat ,X_col )
 X_col = reshape(X_col, 2,:)
@@ -542,13 +542,13 @@ size(X_col)
 #+end_src
 
 #+RESULTS:
-: (2 1600)
+: (2 10000)
 *** Result
 
 
 
 #+begin_src julia :results silent
-γ = 0.01
+γ = 0.05
 k_gauss(x,y) = ksq( rbf_gaussian ,γ, x,y)
 ∇k_gauss(x,y) =∇ksq(d_rbf_gaussian,γ , x,y)
 Δk_gauss(x,y) = Δksq(dd_rbf_gaussian , d_rbf_gaussian ,γ, x,y)
@@ -564,7 +564,7 @@ S_plate = PDESystem(k_plate , ∇k_plate , Δk_plate , a, ∇a , f, g_D ,g_N , d
 
 
 #+begin_src julia :results silent
-γ = 0.05
+γ = 0.01
 k_bspline(x,y) = k(B_3,γ , x,y)
 ∇k_bspline(x,y) =∇k(d_B_3,γ , x,y)
 Δk_bspline(x,y) = Δk(dd_B_3, d_B_3, γ , x,y)
@@ -580,7 +580,7 @@ cond(K)
 #+end_src
 
 #+RESULTS:
-: 2.3801797f9
+: 179259.14f0
 
 
 #+name: fig:solution
