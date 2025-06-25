@@ -20,6 +20,10 @@
 \)
 </div>
 #+end_export
+This Submission is also available on
+[[https://proceduraltree.github.io/KernelMethods-P2/]]
+[[file:images/qr-code.png]]
+
 * Preamble :noexport:
 #+begin_src julia :tangle src/kernel.jl :eval never
 
@@ -827,7 +831,7 @@ save("images/B3-spline-kernel-diff.png",fig )
 #+end_src
 
 #+caption: spline kernel with various values for \(\gamma \) for a diffusive system
-
+[[file:images/B3-spline-kernel-diff.png]]
 
 
 * Domains
