@@ -46,7 +46,15 @@ using .Kernel
 using KernelAbstractions
 using LinearAlgebra
 #+end_src
-* Distance Matrix Comutation :noexport:
+
+#+begin_src julia :tangle src/rbf.jl
+module RadialBasisKernels
+export k , ∇k , Δk , ksq , ∇ksq , Δksq
+export rbf_gaussian , d_rbf_gaussian , dd_rbf_gaussian
+export B_3 , d_B_3 , dd_B_3
+export thin_plate , d_thin_plate , dd_thin_plate
+#+end_src
+* Distance Matrix Computation :noexport:
 #+begin_src julia
 
 using KernelAbstractions
@@ -148,7 +156,7 @@ spkernel(K)
 #+RESULTS:
 : julia-async:3c966bb3-f2f0-409e-a6f3-af3aca9bdfbd
 
-* Regression Approach
+* Projection Approach
 Aim of this excrcise is to find solutions \(u\in \mathcal{H}_k\) such that they satisfy the following system
 
 \begin{align}
@@ -159,12 +167,12 @@ u(x) &= g_D(x) & \text{on} \quad  \Gamma_D \\
 \end{align}
 we do this by projecting the system onto \(\mathcal{H}_k(\Omega)\)
 \begin{align}
-\label{eq:pde_proj}
+\label{eq:pde_H}
 \left<   - \nabla \cdot   \left( a(x) \nabla u(x) \right),\phi \right>&= \left< f(x) ,\phi  \right> & \text{in} \quad \Omega , \phi \in  \mathcal{H}_{k} \\
 \left<   u(x) , \phi \right>&= \left< g_D(x) , \phi  \right> & \text{on} \quad  \Gamma_D \\
 \left<   \left( a(x) \nabla u(x)  \right) \cdot  \vec{n}(x) , \phi \right>&= \left< g_N ,\phi  \right> & \text{on} \quad \Gamma_N
 \end{align}
-Let \( \hat{X}:=\left\{ x_j \right\}_{j=1}^n \subset\RR ^d\). Since \(\left\{ k(x_i,\cdot ) \right\}_{i=1}^n\) is a basis of \(\mathcal{H}_k\) it also has to hold
+Let \( \hat{X}:=\left\{ x_j \right\}_{j=1}^n \subset\RR ^d\). Since \(\left\{ k(x_i,\cdot ) \right\}_{i=1}^n\) is the basis of a finite subspace in \(\mathcal{H}_k\) it also has to hold
 \begin{align}
 \label{eq:pde_proj}
 \left<   - \nabla \cdot   \left( a(x) \nabla u(x) \right),k(x_i,\cdot ) \right>&= \left< f(x) ,k(x_i,\cdot )  \right> & \text{in} \quad \Omega , x_i \in  X \\
@@ -192,7 +200,7 @@ this leads to the following Linear system
 \sum_{j=1}^n  a_j \left( a(x_i) \nabla_{x_i}  k(x_j ,x_i) \cdot  n_i \right) &=  g_N(x_i , n_i) & x_i \in  \Gamma_N
 \end{align}
 
-this corresponds directly with the System Matrix \(K\), that we compute in julia using a GPU copatible kernel that employs element wise notation
+this corresponds directly with the System Matrix \(K\), that we compute in julia using a GPU compatmible kernel that employs element wise notation
 #+begin_src julia :tangle src/kernel.jl
 
 @kernel function system_matrix!(K ,@Const(X), a , ∇a ,k, ∇k, Δk  , sdf , grad_sdf , sdf_beta)
@@ -200,12 +208,12 @@ this corresponds directly with the System Matrix \(K\), that we compute in julia
     @inbounds xᵢ= SVector{2}(view(X, : , Iᵢⱼ[1])) # Essentially X[:,i]
     @inbounds xⱼ= SVector{2}(view(X, : , Iᵢⱼ[2])) # Essentially X[:,j]
     # poisson equation
-    @inbounds K[Iᵢⱼ] = -a(xᵢ)*Δk(xᵢ,xⱼ)- ∇a(xᵢ)⋅∇k(xᵢ,xⱼ)
+    @inbounds K[Iᵢⱼ] = -a(xᵢ)*Δk(xⱼ ,xᵢ)- ∇a(xᵢ)⋅∇k(xⱼ ,xᵢ)
     if abs(sdf(xᵢ)) < 1e-10
         if sdf_beta(xᵢ) < 0
             # Neumann Boundary Condition
             @inbounds nᵢ= grad_sdf(xᵢ)
-            @inbounds K[Iᵢⱼ] = a(xᵢ) * (nᵢ ⋅ ∇k(xᵢ , xⱼ))
+            @inbounds K[Iᵢⱼ] = a(xᵢ) * (nᵢ ⋅ ∇k( xⱼ , xᵢ ))
         else
           # Dirichlet Boundary
           @inbounds K[Iᵢⱼ] =k(xᵢ , xⱼ)
@@ -213,6 +221,9 @@ this corresponds directly with the System Matrix \(K\), that we compute in julia
     end
 end
 #+end_src
+
+#+RESULTS:
+: julia-async:50c35846-ece5-4961-8a3a-800152c4bb4f
 
 ** right hand side
 The right hand side of the system is computed in a similar Fashion
@@ -237,11 +248,23 @@ The right hand side of the system is computed in a similar Fashion
      end
 end
 #+end_src
+** Kernel Matrix for evaluation
+#+begin_src julia :tangle src/kernel.jl
 
+@kernel function kernel_matrix!(A , @Const(X_test) , @Const(X_col) ,k , sdf)
+    Iᵢⱼ =  @index(Global , Cartesian)
+    @inbounds xᵢ= SVector{2}(view(X_test , : , Iᵢⱼ[1])) # Essentially X[:,1]
+    @inbounds xⱼ= SVector{2}(view(X_col , : , Iᵢⱼ[2]))
+    K = k(xᵢ , xⱼ)
+    # Mask outside Domain with NaN
+    if sdf(xᵢ) > 0
+        K = NaN
+        end
+    @inbounds A[Iᵢⱼ] = K
+end
+#+end_src
 * Solver
-
-#+RESULTS:
-
+Our implementation Provides some structs for convenience. A ~PDESystem~ that stores the Data functions of a diffusion PDE together with the kernel and its derrivatives \(k , \nabla k , \Delta k\) and information about the Domain of the problem in form if its signed distance function and Its gradient (for normals at the boundary)
 #+begin_src julia :tangle src/pdesolver.jl :eval never
 struct PDESystem
     k :: Function
@@ -257,22 +280,32 @@ struct PDESystem
     sdf_beta::Function
 end
 
+#+end_src
+We provide a  ~PDESolver~ that stores The PDE system, Collocation points \(\hat{X}\) , and the solution vector \(\alpha \) in \(u_h = \sum_{j=0}^n \alpha_j k(x_j , \cdot )\)
+#+begin_src julia :tangle src/pdesolver.jl :eval never
 struct PDESolver
     S::PDESystem
     X::AbstractMatrix
     α :: AbstractVector
 end
 
+#+end_src
+~PDESolver~ Provides methods for evaluation itselve on a test dataset
+#+begin_src julia :tangle src/pdesolver.jl :eval never
 function (f::PDESolver)(X)
     dev = get_backend(X)
     print("Backend" , dev)
     K = KernelAbstractions.zeros(dev , Float32, size(X,2)  , size(f.X ,2))
     print("Size of the system Matrix:" , size(K))
-    kernel_matrix! = dirichlet_matrix!( dev , 256 , size(K))
-    kernel_matrix!(K, X , f.X , f.S.k )
+    km! = kernel_matrix!( dev , 256 , size(K))
+    km!(K, X , f.X , f.S.k , f.S.sdf )
 return K * f.α , K
 end
 
+#+end_src
+
+As well as a method to solve the approximation system and return a instance of ~PDESystem~
+#+begin_src julia :tangle src/pdesolver.jl :eval never
 function solve(S, X_col)
     dev = get_backend(X_col)
     K = KernelAbstractions.zeros(dev , Float32 , size(X_col , 2) , size(X_col , 2) )
@@ -284,6 +317,8 @@ function solve(S, X_col)
     end
 
 
+#+end_src
+#+begin_src julia :tangle src/pdesolver.jl :eval never
 function get_boundary(
     S,
     X
@@ -301,63 +336,61 @@ function get_boundary(
 end
 #+end_src
 
+we tested our solver for compatibility with a CPU and A GPU Backend on a modern 16Core CPU and a RTX 4070. The GPU backend was ~8x faster for a system with 10000 DOF. (~120ms vs ~1.s)
 * Kernel Implementation
 As kernels we use Radial Basis Kernels (RBF) \(k(x,x') := \phi (\frac{\|x-x'\|}{\gamma})\). That consist of a radial basis function \(\phi \) as well as a scaling factor \(\gamma \)
 where \(\nabla_x , \Delta_x\) are the partial gradients and laplacians with respect to the second argument of \(k(x_j, \cdot )\).
-for a radial basis function \(\phi (r^2) \in  C^2(\RR)\)  and a corresponding RBF kernel  they can be computed trivially
+for a radial basis function \(\phi (r^2) \in  C^2(\RR)\)  and a corresponding RBF kernel  they can be computed directly
 \begin{align}
 \label{eq:2}
 \nabla_x k(x',x) &= \phi'\left(\frac{\|x - x'\|}{\gamma}\right) \cdot \frac{x - x'}{\gamma\|x - x'\|} \\
-\Delta_x k(x',x) &= \frac{1}{\gamma^2} \phi''\left(\frac{\|x - x'\|}{\gamma}\right) + \frac{1}{\gamma^{2}} \frac{d - 1}{\|x - x'\|} \cdot \phi'\left(\frac{\|x - x'\|}{\gamma}\right)
+\Delta_x k(x',x) &= \frac{1}{\gamma^2} \phi''\left(\frac{\|x - x'\|}{\gamma}\right) + \frac{1}{\gamma} \frac{d - 1}{\|x - x'\|} \cdot \phi'\left(\frac{\|x - x'\|}{\gamma}\right)
 \end{align}
-where \(d\) is the dimension of \(x\)
-#+begin_src julia
+where \(d\) is the dimension of \(x\). Note that those expressions are singular for \(r=0\). we prevent this numerically by using \(\max(10^{-15} , r)\) instead of \(r\).
+#+begin_src julia :tangle src/rbf.jl
 using StaticArrays
-@inline function k(ϕ::Function , ::Val{γ},x̂::SVector{N} ,x::SVector{N}) where {N , γ , RBFType}
-    r = max(1e-15,norm(x-x̂)/γ)
-    ϕ(r)
+@inline function k(ϕ::RBFType , ::Val{γ},x̂::SVector{N} ,x::SVector{N}) where {N , γ , RBFType}
+    r = max(1e-15,norm(x-x̂))
+    ϕ(r/γ)
     end
-@inline function ∇k(dϕ::Function , ::Val{γ} ,x̂::SVector{N} ,x::SVector{N}) where {N , γ , dRBFType}
-    r = max(1e-15,norm(x-x̂)/γ)
-    (x-x̂)*dϕ(r) *  1/(r*γ^2)
+@inline function ∇k(dϕ::dRBFType , ::Val{γ} ,x̂::SVector{N} ,x::SVector{N}) where {N , γ , dRBFType}
+    r = max(1e-15,norm(x-x̂))
+    (x-x̂)*dϕ(r/γ) *  1/(r*γ)
     end
-@inline function Δk(d²ϕ::Function,  dϕ::Function , ::Val{γ} ,x̂::SVector{N} ,x::SVector{N}) where {N , γ , ddRBFType}
-    r = max(1e-15,norm(x-x̂)/γ)
-    1/γ^2 * d²ϕ(r)  +  1/γ^2 * (N-1)/r *dϕ(r)
+@inline function Δk(d²ϕ::ddRBFType,  dϕ::dRBFType , ::Val{γ} ,x̂::SVector{N} ,x::SVector{N}) where {N , γ , ddRBFType , dRBFType}
+    r = max(1e-15,norm(x-x̂))
+    1/γ^2 * d²ϕ(r/γ)  +  1/γ * (N-1)/r *dϕ(r/γ)
     end
 #+end_src
-
-#+RESULTS:
-: Δk (generic function with 1 method)
 ** squared rbf
-for a squared RBF the kernels are simpler. and non singular
+for a squared RBF the kernels \(k(x,x') := \phi (\frac{\|x-x'\|^2}{\gamma})\) are simpler. and non singular
 \begin{align}
 \label{eq:sqr-rbf}
 \nabla_x k(x',x) &= \phi'\left(\frac{r^2}{\gamma}\right) \cdot \frac{x - x'}{\gamma} \\
 \Delta_x k(x',x) &= \frac{1}{\gamma } (4 * \frac{r^2}{\gamma^2} \phi''\left(\frac{r^2}{\gamma}\right) + 2d\phi'\left(\frac{r^2}{\gamma}\right))
 \end{align}
-#+begin_src julia
+#+begin_src julia :tangle src/rbf.jl
 using StaticArrays
 using LinearAlgebra
 @inline function ksq(ϕ::RBFType , ::Val{γ},x̂::SVector{N} ,x::SVector{N}) where {N , γ , RBFType}
-    r = dot(x-x̂,x-x̂)/γ^2
-    ϕ(r)
+    r = dot(x-x̂,x-x̂)
+    ϕ(r/γ)
     end
 @inline function ∇ksq(dϕ::dRBFType , ::Val{γ} ,x̂::SVector{N} ,x::SVector{N}) where {N , γ , dRBFType}
-    r = dot(x-x̂,x-x̂)/γ^2
-    2/γ^2*(x-x̂)*dϕ(r)
+    r = dot(x-x̂,x-x̂)
+    2/γ^2*(x-x̂)*dϕ(r/γ)
     end
-@inline function Δksq(d²ϕ::ddRBFType,  dϕ::Function , ::Val{γ} ,x̂::SVector{N} ,x::SVector{N}) where {N , γ , ddRBFType}
-    r = dot(x-x̂,x-x̂)/γ^2
-    1/γ^2 * (4*r * d²ϕ(r)  +  2*N*dϕ(r))
+@inline function Δksq(d²ϕ::ddRBFType,  dϕ::Function , ::Val{γ} ,x̂::SVector{N} ,x::SVector{N}) where {N , γ , ddRBFType , dRBFType}
+    r = dot(x-x̂,x-x̂)
+    1/γ^2 * 4*r * d²ϕ(r/γ)  + 2/γ*N*dϕ(r/γ)
     end
 #+end_src
 
 #+RESULTS:
-: Δksq (generic function with 1 method)
+: julia-async:70c08408-31c3-4adc-bc82-d8865b93b190
 
 ** Gauss
-#+begin_src julia :tangle src/gauss_kernel.jl
+#+begin_src julia :tangle src/rbf.jl
 using StaticArrays
 @inline function rbf_gaussian(r)
     exp(-r)
@@ -371,17 +404,19 @@ using StaticArrays
 #+end_src
 
 #+RESULTS:
-: dd_rbf_gaussian (generic function with 1 method)
+: julia-async:f3f21d6e-71df-4891-8781-f0dd47c6dd10
 
 #+begin_src julia :results file graphics :file "images/gauss-rbf.png"
 using GLMakie
 X = range(-2 , 2 , 100)
-Y = range(-5 , 5 , 100)
 using LinearAlgebra
 
 fig = Figure()
 ax = Axis(fig[1,1])
-lines!(X , x->rbf_gaussian(x^2))
+lines!(ax , X ,x->    rbf_gaussian(x^2), label=L"gauss")
+lines!(ax , X ,x-> -2x* d_rbf_gaussian(x^2) , label=L"\partial gauss")
+lines!(ax , X ,x-> 4x^2* dd_rbf_gaussian(x^2) , label=L"\partial^2 gauss")
+axislegend(ax)
 save("images/gauss-rbf.png",fig )
 #+end_src
 
@@ -393,7 +428,7 @@ save("images/gauss-rbf.png",fig )
 \begin{align*}
 B_{d}(r) = \sum_{n=0}^4 \frac{(-1)^n}{d!} \binom{d+1}{n} \left( r + \frac{d+1}{2}-n \right)^d_+
 \end{align*}
-#+begin_src julia
+#+begin_src julia :tangle src/rbf.jl
 function B_3(r)
 r_prime = r+2
     return 1/24 * (
@@ -427,8 +462,6 @@ end
 
 #+end_src
 
-#+RESULTS:
-
 #+name: fig:b-spline
 #+begin_src julia :results file graphics :file "images/b-spline.png"
 using GLMakie
@@ -454,7 +487,8 @@ save("images/b-spline.png",fig )
 T(r^2) &= \frac{1}{2}r\ln{r} \\
 T(r) &= r^2\ln{r}
 \end{align*}
-#+begin_src julia
+note that the thin plate kernel is not p.d. it is c.p.d. However this seemed a non issue numerically
+#+begin_src julia :tangle src/rbf.jl
 function thin_plate(r)
     r == 0.0 && return 0.0
     return 0.5* r *  log(r)
@@ -483,7 +517,10 @@ Y = range(-5 , 5 , 100)
 fig = Figure()
 ax = Axis(fig[1,1])
 
-lines!(ax , X , thin_plate)
+lines!(ax , X , x-> x^2 * log(x),  label=L"T")
+lines!(ax , X , x-> 2x * log(x) + x , label=L"\partial T")
+lines!(ax , X , x-> 2log(x) + 3 , label=L"\partial^2 T")
+axislegend(ax)
 
 save("images/plate-spline.png",fig )
 #+end_src
@@ -492,16 +529,43 @@ save("images/plate-spline.png",fig )
 [[file:images/plate-spline.png]]
 
 * PDE
+To use our PDE solver we include all our modules
 #+begin_src julia
 using Revise
 using LinearAlgebra
 includet("src/pdesolver.jl")
 includet("src/domains.jl")
+includet("src/rbf.jl")
 using .PDESolvers
 using .Domains
+using .RadialBasisKernels
 #+end_src
 
 #+RESULTS:
+
+and generate a set of collocation and test points. If a functional CUDA GPU is available, we move the data to the GPU. The solver will then attempt so solve on the GPU. Anoyingly all functions have to be known at compile time, when using the GPU backend.
+#+begin_src julia
+using CUDA
+dev = CUDA.functional() ? cu : Array
+#dev = Array
+X = range(0 , 1 , 20)
+Y = range(0 , 1 , 20)
+X_col = [ [x,y] for x in X , y in Y]
+X_col = reduce(vcat ,X_col )
+X_col = reshape(X_col, 2,:) |> dev
+X_t = range(0 , 1 , 100)
+Y_t = range(0 , 1 , 100)
+X_test = [ [x,y] for x in X_t , y in Y_t]
+X_test = reduce(vcat , X_test)
+X_test = reshape(X_test, 2,:) |> dev
+X_lol = rand(2,400) |> dev
+
+
+size(X_col)
+#+end_src
+
+#+RESULTS:
+: (2 400)
 
 ** PDE Poisson
 with \(a(x) = 1 , g_{D}(x) = 0\) and \(\Gamma_{N} = \emptyset \) this method is able to model the poisson equation
@@ -529,118 +593,125 @@ g_D(x::SVector{2})= 0
 g_N(x::SVector{2} , n::SVector{2}) = 0
 #+end_src
 
+*** Plotting Utility
 #+begin_src julia
-using CUDA
-dev = CUDA.functional() ? cu : Array
-#dev = Array
-X = range(0 , 1 , 20)
-Y = range(0 , 1 , 20)
-X_col = [ [x,y] for x in X , y in Y]
-X_col = reduce(vcat ,X_col )
-X_col = reshape(X_col, 2,:) |> dev
-X_t = range(0 , 1 , 100)
-Y_t = range(0 , 1 , 100)
-X_test = [ [x,y] for x in X_t , y in Y_t]
-X_test = reduce(vcat , X_test)
-X_test = reshape(X_test, 2,:) |> dev
-X_lol = rand(2,400) |> dev
-
-
-size(X_col)
+using LaTeXStrings
+function plot(fig , i,::Val{γ} , limits , errors, rbf , d_rbf , dd_rbf) where γ
+        @inline k_rbf(x,y) = @inline k( rbf ,Val(γ), x,y)
+        @inline ∇k_rbf(x,y) =@inline ∇k(d_rbf,Val(γ), x,y)
+        @inline Δk_rbf(x,y) =@inline Δk(dd_rbf , d_rbf ,Val(γ), x,y)
+        S_gauss = PDESystem(k_rbf , ∇k_rbf , Δk_rbf , a, ∇a , f, g_D ,g_N , domain , ∇domain , sdf_β )
+        solution , K = solve(S_gauss ,X_col);
+        ax = Axis(fig[1,i] , title=L"$\gamma=%$γ$ Condition %$(cond(K))", aspect=DataAspect())
+        sol , K_t = solution(X_test)
+        push!(errors , norm(Array(sol) - u.(eachcol(Array(X_test))) , Inf))
+        sol = reshape(Array(sol) , size(X_t,1) , :)
+        hm = heatmap!(ax , X,Y, sol , colorrange=limits)
+        return fig
+end
+function plotsq(fig , i,::Val{γ} , limits , errors, rbf , d_rbf , dd_rbf) where γ
+        @inline k_rbf(x,y) = @inline ksq( rbf ,Val(γ), x,y)
+        @inline ∇k_rbf(x,y) =@inline ∇ksq(d_rbf,Val(γ), x,y)
+        @inline Δk_rbf(x,y) =@inline Δksq(dd_rbf , d_rbf ,Val(γ), x,y)
+        S_gauss = PDESystem(k_rbf , ∇k_rbf , Δk_rbf , a, ∇a , f, g_D ,g_N , domain , ∇domain , sdf_β )
+        solution , K = solve(S_gauss ,X_col);
+        ax = Axis(fig[1,i] , title=L"$\gamma=%$γ$ Condition %$(cond(K))", aspect=DataAspect())
+        sol , K_t = solution(X_test)
+        push!(errors , norm(Array(sol) - u.(eachcol(Array(X_test))) , Inf))
+        sol = reshape(Array(sol) , size(X_t,1) , :)
+        hm = heatmap!(ax , X,Y, sol , colorrange=limits)
+        return fig
+end
 #+end_src
 
 #+RESULTS:
-: (2 400)
-*** Result
+: plotsq (generic function with 1 method)
 
 
 
-#+begin_src julia :results silent
-γ = 0.01
-@inline k_gauss(x,y) = @inline ksq( rbf_gaussian ,Val(0.1), x,y)
-@inline ∇k_gauss(x,y) =@inline ∇ksq(d_rbf_gaussian,Val(0.1) , x,y)
-@inline Δk_gauss(x,y) =@inline Δksq(dd_rbf_gaussian , d_rbf_gaussian ,Val(0.1), x,y)
-S_gauss = PDESystem(k_gauss , ∇k_gauss , Δk_gauss , a, ∇a , f, g_D ,g_N , domain , ∇domain , sdf_β )
-#+end_src
 
-#+begin_src julia :results silent
-k_plate(x,y) = ksq(thin_plate ,γ , x,y)
-∇k_plate(x,y) =∇ksq(d_thin_plate ,γ , x,y)
-Δk_plate(x,y) = Δksq(dd_thin_plate  , d_thin_plate ,γ, x,y)
-S_plate = PDESystem(k_plate , ∇k_plate , Δk_plate , a, ∇a , f, g_D ,g_N , domain , ∇domain , sdf_β )
-#+end_src
-
-
-#+begin_src julia :results silent
-γ = 0.01
-k_bspline(x,y) = k(B_3,γ , x,y)
-∇k_bspline(x,y) =∇k(d_B_3,γ , x,y)
-Δk_bspline(x,y) = Δk(dd_B_3, d_B_3, γ , x,y)
-S_bspline = PDESystem(k_bspline , ∇k_bspline , Δk_bspline , a, ∇a , f, g_D ,g_N , domain , ∇domain , sdf_β )
-#+end_src
-
-
-
-#+begin_src julia
-using LinearAlgebra
-solution , K = solve(S_gauss ,X_lol);
-#cond(K)
-
-#+end_src
-
-#+RESULTS:
-
-
-
-#+name: fig:solution
-#+begin_src julia :results file graphics :file "images/solution.png"
+*** Results
+#+name: fig:gauss-kernel
+#+begin_src julia :results file graphics :file "images/gauss-kernel.png"
 using GLMakie
-fig = Figure()
-ax = Axis(fig[1,1] , title="Aproximate solution", aspect=DataAspect())
-sol , K_t = solution(X_test)
-sol = reshape(Array(sol) , size(X_t,1) , :)
-hm = heatmap!(ax , X,Y, sol)
-Colorbar(fig[:, end+1], hm)
-save("images/solution.png",fig )
-#+end_src
-
-#+RESULTS: fig:solution
-[[file:images/solution.png]]
-
-#+name: fig:exact-solution
-#+begin_src julia :results file graphics :file "images/exact-solution.png"
-using GLMakie
+fig = Figure(size=(2600,400))
+limits = (0, 0.06)
+errors = Vector{Float32}()
 u(x , y) = x * (1-x) * y* ( 1- y)
 u(x) = u(x[1] , x[2])
-fig = Figure()
-ax = Axis(fig[1,1] , title="Exact sollution" , aspect=DataAspect())
-
-hm = heatmap!(ax,X_t,Y_t,u)
+for (i,gamma) in enumerate([Val(0.1) , Val(0.075) , Val(0.05) , Val(0.025)])
+plotsq(fig , i,gamma , limits , errors , rbf_gaussian , d_rbf_gaussian , dd_rbf_gaussian)
+end
+ax = Axis(fig[1,0] , title="Exact sollution" , aspect=DataAspect())
+hm = heatmap!(ax,X_t,Y_t,u , colorrange=limits)
 Colorbar(fig[:, end+1], hm)
-save("images/exact-solution.png",fig )
+ax = Axis(fig[1,end+1] , title=L"$L^\infty$ Error" , xlabel=L"\gamma" , ylabel=L"|u_h - u |_\infty")
+lines!(ax , [0.01 , 0.0075 , 0.005 , 0.0025] , errors)
+save("images/gauss-kernel.png",fig )
 #+end_src
 
-#+RESULTS: fig:exact-solution
-[[file:images/exact-solution.png]]
+#+caption: gauss kernel with various values for \(\gamma \)
+#+RESULTS: fig:gauss-kernel
+[[file:images/gauss-kernel.png]]
 
-#+begin_src julia
-sol , _ = solution(X_test)
-norm(Array(sol) - u.(eachcol(Array(X_test))) , Inf)
+#+name: fig:thin-plate-kernel
+#+begin_src julia :results file graphics :file "images/thin-plate-kernel.png"
+using GLMakie
+fig = Figure(size=(2600,400))
+limits = (0, 0.06)
+errors = Vector{Float32}()
+for (i,gamma) in enumerate([Val(1.0) , Val(0.1) , Val(0.05) , Val(0.01)])
+plotsq(fig , i,gamma , limits , errors , thin_plate , d_thin_plate , dd_thin_plate)
+end
+u(x , y) = x * (1-x) * y* ( 1- y)
+u(x) = u(x[1] , x[2])
+ax = Axis(fig[1,0] , title="Exact sollution" , aspect=DataAspect())
+hm = heatmap!(ax,X_t,Y_t,u , colorrange=limits)
+Colorbar(fig[:, end+1], hm)
+ax = Axis(fig[1,end+1] , title=L"$L^\infty$ Error" , xlabel=L"\gamma" , ylabel=L"|u_h - u |_\infty")
+lines!(ax , [1.,0.1,0.05,0.01] , errors)
+save("images/thin-plate-kernel.png",fig )
 #+end_src
 
-#+RESULTS:
-: 0.00085476646f0
+#+RESULTS: fig:thin-plate-kernel
+[[file:images/thin-plate-kernel.png]]
+#+name: fig:B3-spline-kernel
+#+begin_src julia :results file graphics :file "images/B3-spline-kernel.png"
+using GLMakie
+fig = Figure(size=(2600,400))
+limits = (0, 0.06)
+errors = Vector{Float32}()
+for (i,gamma) in enumerate([Val(0.5) , Val(1.0) , Val(1.5) , Val(2.0)])
+plot(fig , i,gamma , limits , errors , B_3 , d_B_3 , dd_B_3)
+end
+u(x , y) = x * (1-x) * y* ( 1- y)
+u(x) = u(x[1] , x[2])
+ax = Axis(fig[1,0] , title="Exact sollution" , aspect=DataAspect())
+hm = heatmap!(ax,X_t,Y_t,u , colorrange=limits)
+Colorbar(fig[:, end+1], hm)
+ax = Axis(fig[1,end+1] , title=L"$L^\infty$ Error" , xlabel=L"\gamma" , ylabel=L"|u_h - u |_\infty")
+lines!(ax , [0.5,1.,1.5,2.] , errors)
+save("images/B3-spline-kernel.png",fig )
+#+end_src
+
+#+RESULTS: fig:B3-spline-kernel
+[[file:images/B3-spline-kernel.png]]
 
 ** Diffusion PDE
-
-*** Result
+we evaluate the diffusion PDE with
+\begin{align*}
+a(x) &=  x_1 +2 \\
+f(x) &= - \alpha \|x\|^{\alpha -2} * (3x_1 + 4) - \alpha * (\alpha -2) * (x_1 +2) * \|x\|^{\alpha -3} \\
+g_D(x) &= \|x\|^{\alpha }\\
+g_{N}(x,n) &= \alpha  \|x\|^{\alpha -2}* (x_1 +2) * x \cdot  n
+\end{align*}
 where
 #+begin_src julia
 using StaticArrays
 a(x::SVector{2}) = x[1] + 2
 ∇a(x::SVector{2}) = SVector{2}(1.,0.)
-α = 2.
-β = 1.5
+α = 0.5
+β = 0.2
 f(x::SVector{2} , ::Val{α}) where α = - α*norm(x ,2)^(α - 2)*(3x[1] +4) - α*(α -2) * (x[1] + 2) * norm(x,2)^(α - 3)
 g_D(x::SVector{2} , ::Val{α}) where α = norm(x,2)^α
 g_N(x::SVector{2} , n::SVector{2} , ::Val{α}) where α = α* norm(x,2.)^(α-2.)*(x[1] +2.) * x ⋅ n
@@ -650,65 +721,127 @@ g_N(x, n) = g_N(x , n,Val(α))
 function sdf_β(x::SVector{2})
     return sdf_square(x , β , SVector(-1.,-1) )
 end
-S = PDESystem(k_gauss , ∇k_gauss , Δk_gauss , a, ∇a , f, g_D ,g_N , sdf_L , sdf_L_grad , sdf_β )
 #+end_src
 
 #+RESULTS:
-: PDESystem(Main.k_gauss, Main.∇k_gauss, Main.Δk_gauss, Main.a, Main.∇a, Main.f, Main.g_D, Main.g_N, Main.Domains.sdf_L, Main.Domains.sdf_L_grad, Main.Domains.sdf_β)
+: sdf_β (generic function with 1 method)
 
+And select a collocation set filtered to be inside the domain
 #+begin_src julia
-X = range(-1 , 1 , 30)
-Y = range(-1 , 1 , 30)
+X = range(-1 , 1 , 11)
+Y = range(-1 , 1 , 11)
 X_col = [ [x,y] for x in X , y in Y]
 X_col = reduce(vcat ,X_col )
 X_col = reshape(X_col, 2,:)
-X_t = range(-2 , 2 , 100)
-Y_t = range(-2, 2 , 100)
+X_col = filter(x -> sdf_L(SVector{2}(x)) <= 0 , eachcol(X_col))
+X_col = reduce(hcat , X_col) |> dev
+X_t = range(-1.1 , 1.1 , 100)
+Y_t = range(-1.1, 1.1 , 100)
 X_test = [ [x,y] for x in X_t , y in Y_t]
 X_test = reduce(vcat , X_test)
-X_test = reshape(X_test, 2,:)
+X_test = reshape(X_test, 2,:) |> dev
 size(X_col)
 #+end_src
 
 #+RESULTS:
-: (2 900)
+: (2 96)
 
+*** Plotting utility
 #+begin_src julia
-using LinearAlgebra
-solution , K = solve(S ,X_col)
-cond(K)
+using LaTeXStrings
+function plotdiff(fig , i,::Val{γ} , limits ,  rbf , d_rbf , dd_rbf) where γ
+        @inline k_rbf(x,y) = @inline k( rbf ,Val(γ), x,y)
+        @inline ∇k_rbf(x,y) =@inline ∇k(d_rbf,Val(γ), x,y)
+        @inline Δk_rbf(x,y) =@inline Δk(dd_rbf , d_rbf ,Val(γ), x,y)
+        S_gauss = PDESystem(k_rbf , ∇k_rbf , Δk_rbf , a, ∇a , f, g_D ,g_N , sdf_L , sdf_L_grad , sdf_β )
+        solution , K = solve(S_gauss ,X_col);
+        ax = Axis(fig[1,i] , title=L"$\gamma=%$γ$ Condition %$(cond(K))", aspect=DataAspect())
+        sol , K_t = solution(X_test)
+        push!(errors , norm(Array(sol) - u.(eachcol(Array(X_test))) , Inf))
+        sol = reshape(Array(sol) , size(X_t,1) , :)
+        hm = heatmap!(ax , X,Y, sol , colorrange=limits)
+        return fig
+end
+function plotsqdiff(fig , i,::Val{γ} , limits , rbf , d_rbf , dd_rbf) where γ
+        @inline k_rbf(x,y) = @inline ksq( rbf ,Val(γ), x,y)
+        @inline ∇k_rbf(x,y) =@inline ∇ksq(d_rbf,Val(γ), x,y)
+        @inline Δk_rbf(x,y) =@inline Δksq(dd_rbf , d_rbf ,Val(γ), x,y)
+        S_gauss = PDESystem(k_rbf , ∇k_rbf , Δk_rbf , a, ∇a , f, g_D ,g_N , sdf_L , sdf_L_grad , sdf_β )
+        solution , K = solve(S_gauss ,X_col);
+        ax = Axis(fig[1,i] , title=L"$\gamma=%$γ$ Condition %$(cond(K))", aspect=DataAspect())
+        sol , K_t = solution(X_test)
+        push!(errors , norm(Array(sol) - u.(eachcol(Array(X_test))) , Inf))
+        sol = reshape(Array(sol) , size(X_t,1) , :)
+        hm = heatmap!(ax , X,Y, sol , colorrange=limits)
+        return fig
+end
 #+end_src
 
 #+RESULTS:
-: 221981.19f0
+: plotsqdiff (generic function with 1 method)
 
-#+name: fig:diffusion-solution
-#+begin_src julia :results file graphics :file "images/diffusion-solution.png"
+*** Results
+#+name: fig:gauss-kernel-diff
+#+begin_src julia :results file graphics :file "images/gauss-kernel-diff.png"
 using GLMakie
-fig = Figure()
-ax = Axis(fig[1,1] , title="Aproximate solution")
-sol , K = solution(X_test)
-sol = reshape(sol , size(X_t,1) , :)
-hm = heatmap!(ax , X,Y, sol)
+fig = Figure(size=(1800,400))
+limits = (-0.6, 0)
+for (i,gamma) in enumerate([Val(0.1) , Val(0.075) , Val(0.05) , Val(0.025)])
+plotsqdiff(fig , i,gamma , limits , rbf_gaussian , d_rbf_gaussian , dd_rbf_gaussian)
+end
 Colorbar(fig[:, end+1], hm)
-save("images/diffusion-solution.png",fig )
+save("images/gauss-kernel-diff.png",fig )
 #+end_src
 
+#+caption: gauss kernel with various values for \(\gamma \) for a diffusive system
+#+RESULTS: fig:gauss-kernel-diff
+[[file:images/gauss-kernel-diff.png]]
+
+
+
+#+name: fig:thin-plate-kernel-diff
+#+begin_src julia :results file graphics :file "images/thin-plate-kernel-diff.png"
+fig = Figure(size=(1800,400))
+limits = (-0.6, 0)
+for (i,gamma) in enumerate([Val(0.1) , Val(0.075) , Val(0.05) , Val(0.025)])
+plotsqdiff(fig , i,gamma , limits , thin_plate , d_thin_plate , dd_thin_plate)
+end
+Colorbar(fig[:, end+1], hm)
+save("images/thin-plate-kernel-diff.png",fig )
+#+end_src
+
+#+caption: thin plate kernel with various values for \(\gamma \) for a diffusive system
+#+RESULTS: fig:thin-plate-kernel-diff
+[[file:images/thin-plate-kernel-diff.png]]
+
+#+name: fig:B3-spline-kernel-diff
+#+begin_src julia :results file graphics :file "images/B3-spline-kernel-diff.png"
+using GLMakie
+fig = Figure(size=(1800,400))
+limits = (-0.6, 0)
+for (i,gamma) in enumerate([Val(1.0) , Val(1.25) , Val(1.5) , Val(1.75)])
+plotsqdiff(fig , i,gamma , limits , B_3 , d_B_3 , dd_B_3)
+end
+Colorbar(fig[:, end+1], hm)
+save("images/B3-spline-kernel-diff.png",fig )
+#+end_src
+
+#+caption: spline kernel with various values for \(\gamma \) for a diffusive system
+
+
+
 * Domains
+We define our domains using signed distance functions (SDF) and their gradients.
+The SDF of a unit square centered on \(c \in \RR^{n}\) is given by the \(L^{\infty }\) norm
+\begin{align*}
+\text{sdf}(x) = \|x - c\|_{\infty}
+\end{align*}
+The gradient was calculated analytically and imlpemented as:
 #+begin_src julia :tangle src/domains.jl :eval never
 
 function sdf_square(x::SVector , r::Float64 , center::SVector)
     return norm(x-center,Inf) .- r
 end
-function sdf_L(x::SVector{2})
-    return max(sdf_square(x , 1. , SVector(0,0)) , - sdf_square(x, 1. , SVector(1.,1.)))
-end
-
-function ∇sdf_L(x::SVector{2})
-    ForwardDiff.gradient(sdf_L , x)
-    return
-end
-
 function sdf_square_grad(x::SVector{2}, r::Float64, center::SVector{2})
     d = x - center
     if abs(d[1]) > abs(d[2])
@@ -720,6 +853,23 @@ function sdf_square_grad(x::SVector{2}, r::Float64, center::SVector{2})
         return normalize(SVector(sign(d[1]), sign(d[2])))
     end
 end
+#+end_src
+The L shaped Domain can be described by intersecting 2 square SDF centered on \(c = (0,0)\)
+
+\begin{align*}
+sdf(\Omega_1 \ \Omega_2) &= \max(sdf(\Omega_1) , -sdf(\Omega_2))
+\end{align*}
+
+#+begin_src julia :tangle src/domains.jl :eval never
+function sdf_L(x::SVector{2})
+    return max(sdf_square(x , 1. , SVector(0,0)) , - sdf_square(x, 1. , SVector(1.,1.)))
+end
+
+function ∇sdf_L(x::SVector{2})
+    ForwardDiff.gradient(sdf_L , x)
+    return
+end
+
 
 function sdf_L_grad(x::SVector{2})
     f1 = sdf_square(x, 1.0, SVector(0.0, 0.0))
@@ -740,187 +890,21 @@ end
 
 
 * Appendix :noexport:
-** Linear Sytem
-#+begin_src julia :tangle src/kernel.jl
-
-@kernel function linear_matrix!(A ,@Const(X_L) , @Const(X) , k, ∇k , Δk , a , ∇a)
-    # boilerplate
-    Iᵢⱼ = @index(Global , Cartesian)
-    @inbounds xᵢ= SVector{2}(view(X_L , : , Iᵢⱼ[1]))
-    @inbounds xⱼ= SVector{2}(view(X , : , Iᵢⱼ[2]))
-    # element computation
-    @inbounds A[Iᵢⱼ] = ∇a(xᵢ)⋅∇k(xᵢ,xⱼ) -  a(xᵢ)Δk(xⱼ,xᵢ)
-    end
-#+end_src
-
-#+RESULTS:
-: linear_matrix! (generic function with 4 methods)
-
-** Dirichlet boundary
-The Dirichlet boundary confitions are dealt with as additional condition in the linear system
-#+begin_src julia :tangle src/kernel.jl
-
-@kernel function dirichlet_matrix!(A , @Const(X_D) , @Const(X) ,k)
-    Iᵢⱼ =  @index(Global , Cartesian)
-    @inbounds xᵢ= SVector{2}(view(X_D , : , Iᵢⱼ[1])) # Essentially X[:,1]
-    @inbounds xⱼ= SVector{2}(view(X , : , Iᵢⱼ[2]))
-    K = k(xᵢ , xⱼ)
-    @inbounds A[Iᵢⱼ] = K
-end
-#+end_src
-
-#+RESULTS:
-: julia-async:f35f44a7-4d8a-4825-9dd8-78915cf364bd
-** Neumann Boundary
-
-#+begin_src julia :tangle src/kernel.jl
-
-@kernel function neumann_matrix!(A , @Const(X_N) , @Const(X) , @Const(N) , a , ∇k )
-    Iᵢⱼ =  @index(Global , Cartesian)
-    @inbounds xᵢ= SVector{2}(view(X_N , : , Iᵢⱼ[1])) # Essentially X[:,1]
-    @inbounds xⱼ= SVector{2}(view(X , : , Iᵢⱼ[2]))
-    @inbounds nᵢ= SVector{2}(view(N , : , Iᵢⱼ[1]))
-    @inbounds A[Iᵢⱼ] = a(xᵢ) * (nᵢ ⋅ ∇k(xᵢ , xⱼ))
-    end
-#+end_src
-
-#+RESULTS:
-** alternative approach
-#+begin_src julia :tangle nil
-function assemble_kernel_matrix(
-    S,
-    X_L :: AbstractMatrix ,
-    X_D :: AbstractMatrix ,
-    X_N :: AbstractMatrix ,
-    N :: AbstractMatrix
-)
-    local X = [X_L X_D X_N]
-    DOF = size(X,2)
-    dev = get_backend(X)
-    print("Backend" , dev)
-    K = KernelAbstractions.zeros(dev , Float32,DOF ,DOF)
-    print("Size of the system Matrix:" , size(K))
-    K_linear = @view K[begin:size(X_L , 2) , :]
-    K_dirichlet = @view K[size(X_L , 2)+1:end - size(X_N ,2), :]
-    K_neumann = @view K[end-size(X_N ,2)+1:end, :]
-
-
-    cpu_linear! = linear_matrix!( dev , 64 , size(K_linear))
-    cpu_dirichlet! = dirichlet_matrix!( dev , 64 , size(K_dirichlet))
-    cpu_neumann! = neumann_matrix!( dev , 64 , size(K_neumann))
-
-    cpu_linear!(K_linear  , X_L , X , S.k , S.∇k , S.Δk , S.a , S.∇a)
-    @info "Linear"
-    cpu_dirichlet!(K_dirichlet  , X_D , X , S.k )
-    @info "Dirichlet"
-    cpu_neumann!(K_neumann  , X_N , X , N ,S.a, S.∇k)
-    @info "Neumann"
-    KernelAbstractions.synchronize(dev)
-    return K
-end
-function solve(
-    S,
-    X_L :: AbstractMatrix ,
-    X_D :: AbstractMatrix ,
-    X_N :: AbstractMatrix ,
-    N :: AbstractMatrix
-    )
-    K = assemble_kernel_matrix(S, X_L , X_D , X_N , N)
-    b = get_boundary(S,X_L , X_D , X_N , N)
-    @info "calulating pinv"
-    α =  b'*pinv(K)
-    @info "calculated pinv"
-    return PDESolver(S, X_L , X_D , X_N , N , α' )
-    #return b, K
-
-    end
-#+end_src
-
-#+begin_src julia :results silent
-using Random
-using CUDA
-dev = CUDA.functional() ? cu : Array
-rng = MersenneTwister(0)
-r = 0:0.2:1.99
-N = unit_box_normals.(r)
-N = reduce(hcat , N) |> dev
-X_N = unit_box_path.(r)
-X_N = reduce(hcat , X_N)|> dev
-X_D = unit_box_path.(2:0.1:4)
-X_D = reduce(hcat , X_D) |> dev
-X_L = rand(rng , Float64, 2,100) |> dev
-
-#+end_src
-
-
-#+name: fig:collocation-points
-#+begin_src julia :results file graphics :file "images/collocation-points.png"
-using LaTeXStrings
-using Makie
-using GLMakie
-fig = Figure()
-ax = Axis(fig[1,1] , title="Collocation Points")
-
-scatter!(ax,X_L |> Array, label="Data Points")
-scatter!(ax,X_D|> Array, label="Dirichlet Points")
-scatter!(ax,X_N |> Array, label="Neumann Points")
-arrows!(ax,X_N[1,:]|> Array , X_N[2,:] |> Array, N[1,:] |> Array, N[2,:] |> Array, lengthscale=0.1)
-axislegend(ax , position=:lt)
-save("images/collocation-points.png",fig )
-#+end_src
 ** Postamble
 #+begin_src julia :tangle src/kernel.jl :eval never
 
-export linear_matrix!
-export dirichlet_matrix!
-export neumann_matrix!
 export apply_function_colwise!
 export system_matrix!
+export kernel_matrix!
 end
 #+end_src
 
-#+begin_src julia :tangle src/domains.jl :eval never
-function unit_box_normals(γ::Float64)
-    p = SVector{2}(0,0)
-    xnormal = SVector{2}(1,0)
-    ynormal = SVector{2}(0,1)
-    branch = γ % 4.
-    if floor(branch) == 0.
-        n = -ynormal
-    elseif floor(branch) == 1.
-        n = xnormal
-    elseif floor(branch) == 2.
-        n = ynormal
-    elseif floor(branch) == 3.
-        n = -xnormal
-    else
-        throw("γ=$γ not in range [0 , 4]")
-    end
 
-    return n
-end
-function unit_box_path(γ::Float64)
-    p = SVector{2}(0,0)
-    xnormal = SVector{2}(1,0)
-    ynormal = SVector{2}(0,1)
-    branch = γ % 4.
-    if floor(branch) == 0.
-        p = branch%1 * xnormal
-    elseif floor(branch) == 1.
-        p = xnormal +  branch%1 * ynormal
-    elseif floor(branch) == 2.
-        p = (1-branch%1)*xnormal + ynormal
-    elseif floor(branch) == 3.
-        p = (1-branch%1) * ynormal
-    else
-        throw("γ=$γ not in range [0 , 4]")
-    end
-    return p
+
+#+begin_src julia :tangle src/domains.jl :eval never
 end
 #+end_src
 
-** Postable
-
-#+begin_src julia :tangle src/domains.jl :eval never
+#+begin_src julia :tangle src/rbf.jl :eval never
 end
 #+end_src

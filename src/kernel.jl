@@ -6,7 +6,7 @@ using StaticArrays
 using KernelAbstractions
 using LinearAlgebra;
 
-# Regression Approach
+# Projection Approach
 # Aim of this excrcise is to find solutions \(u\in \mathcal{H}_k\) such that they satisfy the following system
 
 # \begin{align}
@@ -17,12 +17,12 @@ using LinearAlgebra;
 # \end{align}
 # we do this by projecting the system onto \(\mathcal{H}_k(\Omega)\)
 # \begin{align}
-# \label{eq:pde_proj}
+# \label{eq:pde_H}
 # \left<   - \nabla \cdot   \left( a(x) \nabla u(x) \right),\phi \right>&= \left< f(x) ,\phi  \right> & \text{in} \quad \Omega , \phi \in  \mathcal{H}_{k} \\
 # \left<   u(x) , \phi \right>&= \left< g_D(x) , \phi  \right> & \text{on} \quad  \Gamma_D \\
 # \left<   \left( a(x) \nabla u(x)  \right) \cdot  \vec{n}(x) , \phi \right>&= \left< g_N ,\phi  \right> & \text{on} \quad \Gamma_N
 # \end{align}
-# Let \( \hat{X}:=\left\{ x_j \right\}_{j=1}^n \subset\RR ^d\). Since \(\left\{ k(x_i,\cdot ) \right\}_{i=1}^n\) is a basis of \(\mathcal{H}_k\) it also has to hold
+# Let \( \hat{X}:=\left\{ x_j \right\}_{j=1}^n \subset\RR ^d\). Since \(\left\{ k(x_i,\cdot ) \right\}_{i=1}^n\) is the basis of a finite subspace in \(\mathcal{H}_k\) it also has to hold
 # \begin{align}
 # \label{eq:pde_proj}
 # \left<   - \nabla \cdot   \left( a(x) \nabla u(x) \right),k(x_i,\cdot ) \right>&= \left< f(x) ,k(x_i,\cdot )  \right> & \text{in} \quad \Omega , x_i \in  X \\
@@ -50,7 +50,7 @@ using LinearAlgebra;
 # \sum_{j=1}^n  a_j \left( a(x_i) \nabla_{x_i}  k(x_j ,x_i) \cdot  n_i \right) &=  g_N(x_i , n_i) & x_i \in  \Gamma_N
 # \end{align}
 
-# this corresponds directly with the System Matrix \(K\), that we compute in julia using a GPU copatible kernel that employs element wise notation
+# this corresponds directly with the System Matrix \(K\), that we compute in julia using a GPU compatmible kernel that employs element wise notation
 
  ; 
 @kernel function system_matrix!(K ,@Const(X), a , ∇a ,k, ∇k, Δk  , sdf , grad_sdf , sdf_beta)
@@ -58,12 +58,12 @@ using LinearAlgebra;
     @inbounds xᵢ= SVector{2}(view(X, : , Iᵢⱼ[1])) # Essentially X[:,i]
     @inbounds xⱼ= SVector{2}(view(X, : , Iᵢⱼ[2])) # Essentially X[:,j]
     # poisson equation
-    @inbounds K[Iᵢⱼ] = -a(xᵢ)*Δk(xᵢ,xⱼ)- ∇a(xᵢ)⋅∇k(xᵢ,xⱼ)
+    @inbounds K[Iᵢⱼ] = -a(xᵢ)*Δk(xⱼ ,xᵢ)- ∇a(xᵢ)⋅∇k(xⱼ ,xᵢ)
     if abs(sdf(xᵢ)) < 1e-10
         if sdf_beta(xᵢ) < 0
             # Neumann Boundary Condition
             @inbounds nᵢ= grad_sdf(xᵢ)
-            @inbounds K[Iᵢⱼ] = a(xᵢ) * (nᵢ ⋅ ∇k(xᵢ , xⱼ))
+            @inbounds K[Iᵢⱼ] = a(xᵢ) * (nᵢ ⋅ ∇k( xⱼ , xᵢ ))
         else
           # Dirichlet Boundary
           @inbounds K[Iᵢⱼ] =k(xᵢ , xⱼ)
@@ -94,48 +94,25 @@ end;
      end
 end;
 
-# Linear Sytem
+# Kernel Matrix for evaluation
 
  ; 
-@kernel function linear_matrix!(A ,@Const(X_L) , @Const(X) , k, ∇k , Δk , a , ∇a)
-    # boilerplate
-    Iᵢⱼ = @index(Global , Cartesian)
-    @inbounds xᵢ= SVector{2}(view(X_L , : , Iᵢⱼ[1]))
-    @inbounds xⱼ= SVector{2}(view(X , : , Iᵢⱼ[2]))
-    # element computation
-    @inbounds A[Iᵢⱼ] = ∇a(xᵢ)⋅∇k(xᵢ,xⱼ) -  a(xᵢ)Δk(xⱼ,xᵢ)
-    end;
-
-# Dirichlet boundary
-# The Dirichlet boundary confitions are dealt with as additional condition in the linear system
-
- ; 
-@kernel function dirichlet_matrix!(A , @Const(X_D) , @Const(X) ,k)
+@kernel function kernel_matrix!(A , @Const(X_test) , @Const(X_col) ,k , sdf)
     Iᵢⱼ =  @index(Global , Cartesian)
-    @inbounds xᵢ= SVector{2}(view(X_D , : , Iᵢⱼ[1])) # Essentially X[:,1]
-    @inbounds xⱼ= SVector{2}(view(X , : , Iᵢⱼ[2]))
+    @inbounds xᵢ= SVector{2}(view(X_test , : , Iᵢⱼ[1])) # Essentially X[:,1]
+    @inbounds xⱼ= SVector{2}(view(X_col , : , Iᵢⱼ[2]))
     K = k(xᵢ , xⱼ)
+    # Mask outside Domain with NaN
+    if sdf(xᵢ) > 0
+        K = NaN
+        end
     @inbounds A[Iᵢⱼ] = K
 end;
-
-# Neumann Boundary
-
-
- ; 
-@kernel function neumann_matrix!(A , @Const(X_N) , @Const(X) , @Const(N) , a , ∇k )
-    Iᵢⱼ =  @index(Global , Cartesian)
-    @inbounds xᵢ= SVector{2}(view(X_N , : , Iᵢⱼ[1])) # Essentially X[:,1]
-    @inbounds xⱼ= SVector{2}(view(X , : , Iᵢⱼ[2]))
-    @inbounds nᵢ= SVector{2}(view(N , : , Iᵢⱼ[1]))
-    @inbounds A[Iᵢⱼ] = a(xᵢ) * (nᵢ ⋅ ∇k(xᵢ , xⱼ))
-    end;
 
 # Postamble
 
  ; 
-export linear_matrix!
-export dirichlet_matrix!
-export neumann_matrix!
 export apply_function_colwise!
 export system_matrix!
+export kernel_matrix!
 end;

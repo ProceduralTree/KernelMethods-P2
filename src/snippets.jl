@@ -1,4 +1,4 @@
-# Distance Matrix Comutation :noexport:
+# Distance Matrix Computation :noexport:
 
  ; 
 using KernelAbstractions
@@ -94,141 +94,41 @@ end;
 spkernel = sparse_kernel(CPU() , 256 , size(K))
 spkernel(K);
 
-# Kernel Implementation
-# As kernels we use Radial Basis Kernels (RBF) \(k(x,x') := \phi (\frac{\|x-x'\|}{\gamma})\). That consist of a radial basis function \(\phi \) as well as a scaling factor \(\gamma \)
-# where \(\nabla_x , \Delta_x\) are the partial gradients and laplacians with respect to the second argument of \(k(x_j, \cdot )\).
-# for a radial basis function \(\phi (r^2) \in  C^2(\RR)\)  and a corresponding RBF kernel  they can be computed trivially
-# \begin{align}
-# \label{eq:2}
-# \nabla_x k(x',x) &= \phi'\left(\frac{\|x - x'\|}{\gamma}\right) \cdot \frac{x - x'}{\gamma\|x - x'\|} \\
-# \Delta_x k(x',x) &= \frac{1}{\gamma^2} \phi''\left(\frac{\|x - x'\|}{\gamma}\right) + \frac{1}{\gamma^{2}} \frac{d - 1}{\|x - x'\|} \cdot \phi'\left(\frac{\|x - x'\|}{\gamma}\right)
-# \end{align}
-# where \(d\) is the dimension of \(x\)
-
- ; using StaticArrays
-@inline function k(ϕ::Function , ::Val{γ},x̂::SVector{N} ,x::SVector{N}) where {N , γ , RBFType}
-    r = max(1e-15,norm(x-x̂)/γ)
-    ϕ(r)
-    end
-@inline function ∇k(dϕ::Function , ::Val{γ} ,x̂::SVector{N} ,x::SVector{N}) where {N , γ , dRBFType}
-    r = max(1e-15,norm(x-x̂)/γ)
-    (x-x̂)*dϕ(r) *  1/(r*γ^2)
-    end
-@inline function Δk(d²ϕ::Function,  dϕ::Function , ::Val{γ} ,x̂::SVector{N} ,x::SVector{N}) where {N , γ , ddRBFType}
-    r = max(1e-15,norm(x-x̂)/γ)
-    1/γ^2 * d²ϕ(r)  +  1/γ^2 * (N-1)/r *dϕ(r)
-    end;
-
-# squared rbf
-# for a squared RBF the kernels are simpler. and non singular
-# \begin{align}
-# \label{eq:sqr-rbf}
-# \nabla_x k(x',x) &= \phi'\left(\frac{r^2}{\gamma^2}\right) \cdot \frac{x - x'}{\gamma} \\
-# \Delta_x k(x',x) &= \frac{1}{\gamma^2} \phi''\left(\frac{\|x - x'\|}{\gamma}\right) + \frac{1}{\gamma^{2}} \frac{d - 1}{\|x - x'\|} \cdot \phi'\left(\frac{\|x - x'\|}{\gamma}\right)
-# \end{align}
-
- ; using StaticArrays
-using LinearAlgebra
-@inline function ksq(ϕ::RBFType , ::Val{γ},x̂::SVector{N} ,x::SVector{N}) where {N , γ , RBFType}
-    r = dot(x-x̂,x-x̂)/γ^2
-    ϕ(r)
-    end
-@inline function ∇ksq(dϕ::dRBFType , ::Val{γ} ,x̂::SVector{N} ,x::SVector{N}) where {N , γ , dRBFType}
-    r = dot(x-x̂,x-x̂)/γ^2
-    2/γ^2*(x-x̂)*dϕ(r)
-    end
-@inline function Δksq(d²ϕ::ddRBFType,  dϕ::Function , ::Val{γ} ,x̂::SVector{N} ,x::SVector{N}) where {N , γ , ddRBFType}
-    r = dot(x-x̂,x-x̂)/γ^2
-    1/γ^2 * (4*r * d²ϕ(r)  +  2*N*dϕ(r))
-    end;
-
 
 
 # #+RESULTS:
-# : dd_rbf_gaussian (generic function with 1 method)
+# : julia-async:f3f21d6e-71df-4891-8781-f0dd47c6dd10
 
 
  ; using GLMakie
 X = range(-2 , 2 , 100)
-Y = range(-5 , 5 , 100)
 using LinearAlgebra
 
 fig = Figure()
 ax = Axis(fig[1,1])
-lines!(X , x->rbf_gaussian(x^2))
+lines!(ax , X ,x->    rbf_gaussian(x^2), label=L"gauss")
+lines!(ax , X ,x-> -2x* d_rbf_gaussian(x^2) , label=L"\partial gauss")
+lines!(ax , X ,x-> 4x^2* dd_rbf_gaussian(x^2) , label=L"\partial^2 gauss")
+axislegend(ax)
 save("images/gauss-rbf.png",fig );
 
-# Cardinal B_{3} Spline
 
-# \begin{align*}
-# B_{d}(r) = \sum_{n=0}^4 \frac{(-1)^n}{d!} \binom{d+1}{n} \left( r + \frac{d+1}{2}-n \right)^d_+
-# \end{align*}
-
- ; function B_3(r)
-r_prime = r+2
-    return 1/24 * (
-    1 *max(0, (r_prime - 0)^3)
-    -4*max(0, (r_prime - 1)^3)
-    +6*max(0, (r_prime - 2)^3)
-    -4*max(0, (r_prime - 3)^3)
-    +1*max(0, (r_prime - 4)^3)
-    )
-end
-function d_B_3(r)
-r_prime = r+2
-    return 1/24 * (
-    1 *max(0, 3*(r_prime - 0)^2)
-    -4*max(0, 3*(r_prime - 1)^2)
-    +6*max(0, 3*(r_prime - 2)^2)
-    -4*max(0, 3*(r_prime - 3)^2)
-    +1*max(0, 3*(r_prime - 4)^2)
-    )
-end
-function dd_B_3(r)
-r_prime = r+2
-    return 1/24 * (
-    1 *max(0, 6*(r_prime - 0))
-    -4*max(0, 6*(r_prime - 1))
-    +6*max(0, 6*(r_prime - 2))
-    -4*max(0, 6*(r_prime - 3))
-    +1*max(0, 6*(r_prime - 4))
-    )
-end
-;
-
-
-
-# #+RESULTS:
 
 # #+name: fig:b-spline
 
  ; using GLMakie
+using LaTeXStrings
 X = range(-2 , 2 , 100)
 Y = range(-2 , 2 , 100)
 
 fig = Figure()
 ax = Axis(fig[1,1])
 
-lines!(ax , X , B_3)
-
+lines!(ax , X , B_3 , label=L"B_3")
+lines!(ax , X , d_B_3 , label=L"\partial B_3")
+lines!(ax , X , dd_B_3 , label=L"\partial^2 B_3")
+axislegend(ax)
 save("images/b-spline.png",fig );
-
-# Thin Plate
-
- ; function thin_plate(r)
-    r == 0.0 && return 0.0
-    return r^2 * log(r)
-end
-
-function d_thin_plate(r)
-    r == 0.0 && return 0.0
-    return 2r * log(r) + r
-end
-
-function dd_thin_plate(r)
-    r == 0.0 && return 0.0
-    return 2 * log(r) + 3
-end;
 
 
 
@@ -244,18 +144,48 @@ Y = range(-5 , 5 , 100)
 fig = Figure()
 ax = Axis(fig[1,1])
 
-lines!(ax , X , thin_plate)
+lines!(ax , X , x-> x^2 * log(x),  label=L"T")
+lines!(ax , X , x-> 2x * log(x) + x , label=L"\partial T")
+lines!(ax , X , x-> 2log(x) + 3 , label=L"\partial^2 T")
+axislegend(ax)
 
 save("images/plate-spline.png",fig );
 
 # PDE
+# To use our PDE solver we include all our modules
 
  ; using Revise
 using LinearAlgebra
 includet("src/pdesolver.jl")
 includet("src/domains.jl")
+includet("src/rbf.jl")
 using .PDESolvers
-using .Domains;
+using .Domains
+using .RadialBasisKernels;
+
+
+
+# #+RESULTS:
+
+# and generate a set of collocation and test points. If a functional CUDA GPU is available, we move the data to the GPU. The solver will then attempt so solve on the GPU. Anoyingly all functions have to be known at compile time, when using the GPU backend.
+
+ ; using CUDA
+dev = CUDA.functional() ? cu : Array
+#dev = Array
+X = range(0 , 1 , 20)
+Y = range(0 , 1 , 20)
+X_col = [ [x,y] for x in X , y in Y]
+X_col = reduce(vcat ,X_col )
+X_col = reshape(X_col, 2,:) |> dev
+X_t = range(0 , 1 , 100)
+Y_t = range(0 , 1 , 100)
+X_test = [ [x,y] for x in X_t , y in Y_t]
+X_test = reduce(vcat , X_test)
+X_test = reshape(X_test, 2,:) |> dev
+X_lol = rand(2,400) |> dev
+
+
+size(X_col);
 
 # PDE Poisson
 # with \(a(x) = 1 , g_{D}(x) = 0\) and \(\Gamma_{N} = \emptyset \) this method is able to model the poisson equation
@@ -282,101 +212,116 @@ f(x::SVector{2}) =2 * (x[1]+x[2] - x[1]^2 - x[2]^2)
 g_D(x::SVector{2})= 0
 g_N(x::SVector{2} , n::SVector{2}) = 0;
 
- ; using CUDA
-dev = CUDA.functional() ? cu : Array
-#dev = Array
-X = range(0 , 1 , 20)
-Y = range(0 , 1 , 20)
-X_col = [ [x,y] for x in X , y in Y]
-X_col = reduce(vcat ,X_col )
-X_col = reshape(X_col, 2,:) |> dev
-X_t = range(0 , 1 , 100)
-Y_t = range(0 , 1 , 100)
-X_test = [ [x,y] for x in X_t , y in Y_t]
-X_test = reduce(vcat , X_test)
-X_test = reshape(X_test, 2,:) |> dev
-X_lol = rand(2,400) |> dev
+# Plotting Utility
 
+ ; using LaTeXStrings
+function plot(fig , i,::Val{γ} , limits , errors, rbf , d_rbf , dd_rbf) where γ
+        @inline k_rbf(x,y) = @inline k( rbf ,Val(γ), x,y)
+        @inline ∇k_rbf(x,y) =@inline ∇k(d_rbf,Val(γ), x,y)
+        @inline Δk_rbf(x,y) =@inline Δk(dd_rbf , d_rbf ,Val(γ), x,y)
+        S_gauss = PDESystem(k_rbf , ∇k_rbf , Δk_rbf , a, ∇a , f, g_D ,g_N , domain , ∇domain , sdf_β )
+        solution , K = solve(S_gauss ,X_col);
+        ax = Axis(fig[1,i] , title=L"$\gamma=%$γ$ Condition %$(cond(K))", aspect=DataAspect())
+        sol , K_t = solution(X_test)
+        push!(errors , norm(Array(sol) - u.(eachcol(Array(X_test))) , Inf))
+        sol = reshape(Array(sol) , size(X_t,1) , :)
+        hm = heatmap!(ax , X,Y, sol , colorrange=limits)
+        return fig
+end
+function plotsq(fig , i,::Val{γ} , limits , errors, rbf , d_rbf , dd_rbf) where γ
+        @inline k_rbf(x,y) = @inline ksq( rbf ,Val(γ), x,y)
+        @inline ∇k_rbf(x,y) =@inline ∇ksq(d_rbf,Val(γ), x,y)
+        @inline Δk_rbf(x,y) =@inline Δksq(dd_rbf , d_rbf ,Val(γ), x,y)
+        S_gauss = PDESystem(k_rbf , ∇k_rbf , Δk_rbf , a, ∇a , f, g_D ,g_N , domain , ∇domain , sdf_β )
+        solution , K = solve(S_gauss ,X_col);
+        ax = Axis(fig[1,i] , title=L"$\gamma=%$γ$ Condition %$(cond(K))", aspect=DataAspect())
+        sol , K_t = solution(X_test)
+        push!(errors , norm(Array(sol) - u.(eachcol(Array(X_test))) , Inf))
+        sol = reshape(Array(sol) , size(X_t,1) , :)
+        hm = heatmap!(ax , X,Y, sol , colorrange=limits)
+        return fig
+end;
 
-size(X_col);
-
-# Result
-
-
-
-
- ; γ = 0.01
-@inline k_gauss(x,y) = @inline ksq( rbf_gaussian ,Val(0.1), x,y)
-@inline ∇k_gauss(x,y) =@inline ∇ksq(d_rbf_gaussian,Val(0.1) , x,y)
-@inline Δk_gauss(x,y) =@inline Δksq(dd_rbf_gaussian , d_rbf_gaussian ,Val(0.1), x,y)
-S_gauss = PDESystem(k_gauss , ∇k_gauss , Δk_gauss , a, ∇a , f, g_D ,g_N , domain , ∇domain , sdf_β );
-
- ; k_plate(x,y) = k(thin_plate ,γ , x,y)
-∇k_plate(x,y) =∇k(d_thin_plate ,γ , x,y)
-Δk_plate(x,y) = Δk(dd_thin_plate,γ  , d_thin_plate , x,y)
-S_plate = PDESystem(k_plate , ∇k_plate , Δk_plate , a, ∇a , f, g_D ,g_N , domain , ∇domain , sdf_β );
-
- ; k_bspline(x,y) = k(B_3,γ , x,y)
-∇k_bspline(x,y) =∇k(d_B_3,γ , x,y)
-Δk_bspline(x,y) = Δk(dd_B_3, d_B_3, γ , x,y)
-S_bspline = PDESystem(k_bspline , ∇k_bspline , Δk_bspline , a, ∇a , f, g_D ,g_N , domain , ∇domain , sdf_β );
-
- ; using LinearAlgebra
-solution , K = solve(S_gauss ,X_lol);
-#cond(K)
-;
-
-
-
-# #+RESULTS:
-
-
-
-# #+name: fig:solution
+# Results
+# #+name: fig:gauss-kernel
 
  ; using GLMakie
-fig = Figure()
-ax = Axis(fig[1,1] , title="Aproximate solution", aspect=DataAspect())
-sol , K_t = solution(X_test)
-sol = reshape(Array(sol) , size(X_t,1) , :)
-hm = heatmap!(ax , X,Y, sol)
-Colorbar(fig[:, end+1], hm)
-save("images/solution.png",fig );
-
-
-
-# #+RESULTS: fig:solution
-# [[file:images/solution.png]]
-
-# #+name: fig:exact-solution
-
- ; using GLMakie
+fig = Figure(size=(2600,400))
+limits = (0, 0.06)
+errors = Vector{Float32}()
 u(x , y) = x * (1-x) * y* ( 1- y)
 u(x) = u(x[1] , x[2])
-fig = Figure()
-ax = Axis(fig[1,1] , title="Exact sollution" , aspect=DataAspect())
-
-hm = heatmap!(ax,X_t,Y_t,u)
+for (i,gamma) in enumerate([Val(0.1) , Val(0.075) , Val(0.05) , Val(0.025)])
+plotsq(fig , i,gamma , limits , errors , rbf_gaussian , d_rbf_gaussian , dd_rbf_gaussian)
+end
+ax = Axis(fig[1,0] , title="Exact sollution" , aspect=DataAspect())
+hm = heatmap!(ax,X_t,Y_t,u , colorrange=limits)
 Colorbar(fig[:, end+1], hm)
-save("images/exact-solution.png",fig );
+ax = Axis(fig[1,end+1] , title=L"$L^\infty$ Error" , xlabel=L"\gamma" , ylabel=L"|u_h - u |_\infty")
+lines!(ax , [0.01 , 0.0075 , 0.005 , 0.0025] , errors)
+save("images/gauss-kernel.png",fig );
 
 
 
-# #+RESULTS: fig:exact-solution
-# [[file:images/exact-solution.png]]
+# #+caption: gauss kernel with various values for \(\gamma \)
+# #+RESULTS: fig:gauss-kernel
+# [[file:images/gauss-kernel.png]]
+
+# #+name: fig:thin-plate-kernel
+
+ ; using GLMakie
+fig = Figure(size=(2600,400))
+limits = (0, 0.06)
+errors = Vector{Float32}()
+for (i,gamma) in enumerate([Val(1.0) , Val(0.1) , Val(0.05) , Val(0.01)])
+plotsq(fig , i,gamma , limits , errors , thin_plate , d_thin_plate , dd_thin_plate)
+end
+u(x , y) = x * (1-x) * y* ( 1- y)
+u(x) = u(x[1] , x[2])
+ax = Axis(fig[1,0] , title="Exact sollution" , aspect=DataAspect())
+hm = heatmap!(ax,X_t,Y_t,u , colorrange=limits)
+Colorbar(fig[:, end+1], hm)
+ax = Axis(fig[1,end+1] , title=L"$L^\infty$ Error" , xlabel=L"\gamma" , ylabel=L"|u_h - u |_\infty")
+lines!(ax , [1.,0.1,0.05,0.01] , errors)
+save("images/thin-plate-kernel.png",fig );
 
 
- ; sol , _ = solution(X_test)
-norm(Array(sol) - u.(eachcol(Array(X_test))) , Inf);
 
-# Result
+# #+RESULTS: fig:thin-plate-kernel
+# [[file:images/thin-plate-kernel.png]]
+# #+name: fig:B3-spline-kernel
+
+ ; using GLMakie
+fig = Figure(size=(2600,400))
+limits = (0, 0.06)
+errors = Vector{Float32}()
+for (i,gamma) in enumerate([Val(0.5) , Val(1.0) , Val(1.5) , Val(2.0)])
+plot(fig , i,gamma , limits , errors , B_3 , d_B_3 , dd_B_3)
+end
+u(x , y) = x * (1-x) * y* ( 1- y)
+u(x) = u(x[1] , x[2])
+ax = Axis(fig[1,0] , title="Exact sollution" , aspect=DataAspect())
+hm = heatmap!(ax,X_t,Y_t,u , colorrange=limits)
+Colorbar(fig[:, end+1], hm)
+ax = Axis(fig[1,end+1] , title=L"$L^\infty$ Error" , xlabel=L"\gamma" , ylabel=L"|u_h - u |_\infty")
+lines!(ax , [0.5,1.,1.5,2.] , errors)
+save("images/B3-spline-kernel.png",fig );
+
+# Diffusion PDE
+# we evaluate the diffusion PDE with
+# \begin{align*}
+# a(x) &=  x_1 +2 \\
+# f(x) &= - \alpha \|x\|^{\alpha -2} * (3x_1 + 4) - \alpha * (\alpha -2) * (x_1 +2) * \|x\|^{\alpha -3} \\
+# g_D(x) &= \|x\|^{\alpha }\\
+# g_{N}(x,n) &= \alpha  \|x\|^{\alpha -2}* (x_1 +2) * x \cdot  n
+# \end{align*}
 # where
 
  ; using StaticArrays
 a(x::SVector{2}) = x[1] + 2
 ∇a(x::SVector{2}) = SVector{2}(1.,0.)
-α = 2.
-β = 1.5
+α = 0.5
+β = 0.2
 f(x::SVector{2} , ::Val{α}) where α = - α*norm(x ,2)^(α - 2)*(3x[1] +4) - α*(α -2) * (x[1] + 2) * norm(x,2)^(α - 3)
 g_D(x::SVector{2} , ::Val{α}) where α = norm(x,2)^α
 g_N(x::SVector{2} , n::SVector{2} , ::Val{α}) where α = α* norm(x,2.)^(α-2.)*(x[1] +2.) * x ⋅ n
@@ -385,81 +330,102 @@ g_D(x) = g_D(x,Val(α))
 g_N(x, n) = g_N(x , n,Val(α))
 function sdf_β(x::SVector{2})
     return sdf_square(x , β , SVector(-1.,-1) )
-end
-S = PDESystem(k_gauss , ∇k_gauss , Δk_gauss , a, ∇a , f, g_D ,g_N , sdf_L , sdf_L_grad , sdf_β );
+end;
 
 
 
 # #+RESULTS:
-# : PDESystem(Main.k_gauss, Main.∇k_gauss, Main.Δk_gauss, Main.a, Main.∇a, Main.f, Main.g_D, Main.g_N, Main.Domains.sdf_L, Main.Domains.sdf_L_grad, Main.Domains.sdf_β)
+# : sdf_β (generic function with 1 method)
 
+# And select a collocation set filtered to be inside the domain
 
- ; X = range(-1 , 1 , 30)
-Y = range(-1 , 1 , 30)
+ ; X = range(-1 , 1 , 11)
+Y = range(-1 , 1 , 11)
 X_col = [ [x,y] for x in X , y in Y]
 X_col = reduce(vcat ,X_col )
 X_col = reshape(X_col, 2,:)
-X_t = range(-2 , 2 , 100)
-Y_t = range(-2, 2 , 100)
+X_col = filter(x -> sdf_L(SVector{2}(x)) <= 0 , eachcol(X_col))
+X_col = reduce(hcat , X_col) |> dev
+X_t = range(-1.1 , 1.1 , 100)
+Y_t = range(-1.1, 1.1 , 100)
 X_test = [ [x,y] for x in X_t , y in Y_t]
 X_test = reduce(vcat , X_test)
-X_test = reshape(X_test, 2,:)
+X_test = reshape(X_test, 2,:) |> dev
 size(X_col);
 
-
-
-# #+RESULTS:
-# : (2 900)
-
-
- ; using LinearAlgebra
-solution , K = solve(S ,X_col)
-cond(K);
-
-
-
-# #+RESULTS:
-# : 221981.19f0
-
-# #+name: fig:diffusion-solution
-
- ; using GLMakie
-fig = Figure()
-ax = Axis(fig[1,1] , title="Aproximate solution")
-sol , K = solution(X_test)
-sol = reshape(sol , size(X_t,1) , :)
-hm = heatmap!(ax , X,Y, sol)
-Colorbar(fig[:, end+1], hm)
-save("images/diffusion-solution.png",fig );
-
- ; using Random
-using CUDA
-dev = CUDA.functional() ? cu : Array
-rng = MersenneTwister(0)
-r = 0:0.2:1.99
-N = unit_box_normals.(r)
-N = reduce(hcat , N) |> dev
-X_N = unit_box_path.(r)
-X_N = reduce(hcat , X_N)|> dev
-X_D = unit_box_path.(2:0.1:4)
-X_D = reduce(hcat , X_D) |> dev
-X_L = rand(rng , Float64, 2,100) |> dev
-;
-
-
-
-
-# #+name: fig:collocation-points
+# Plotting utility
 
  ; using LaTeXStrings
-using Makie
-using GLMakie
-fig = Figure()
-ax = Axis(fig[1,1] , title="Collocation Points")
+function plotdiff(fig , i,::Val{γ} , limits ,  rbf , d_rbf , dd_rbf) where γ
+        @inline k_rbf(x,y) = @inline k( rbf ,Val(γ), x,y)
+        @inline ∇k_rbf(x,y) =@inline ∇k(d_rbf,Val(γ), x,y)
+        @inline Δk_rbf(x,y) =@inline Δk(dd_rbf , d_rbf ,Val(γ), x,y)
+        S_gauss = PDESystem(k_rbf , ∇k_rbf , Δk_rbf , a, ∇a , f, g_D ,g_N , sdf_L , sdf_L_grad , sdf_β )
+        solution , K = solve(S_gauss ,X_col);
+        ax = Axis(fig[1,i] , title=L"$\gamma=%$γ$ Condition %$(cond(K))", aspect=DataAspect())
+        sol , K_t = solution(X_test)
+        push!(errors , norm(Array(sol) - u.(eachcol(Array(X_test))) , Inf))
+        sol = reshape(Array(sol) , size(X_t,1) , :)
+        hm = heatmap!(ax , X,Y, sol , colorrange=limits)
+        return fig
+end
+function plotsqdiff(fig , i,::Val{γ} , limits , rbf , d_rbf , dd_rbf) where γ
+        @inline k_rbf(x,y) = @inline ksq( rbf ,Val(γ), x,y)
+        @inline ∇k_rbf(x,y) =@inline ∇ksq(d_rbf,Val(γ), x,y)
+        @inline Δk_rbf(x,y) =@inline Δksq(dd_rbf , d_rbf ,Val(γ), x,y)
+        S_gauss = PDESystem(k_rbf , ∇k_rbf , Δk_rbf , a, ∇a , f, g_D ,g_N , sdf_L , sdf_L_grad , sdf_β )
+        solution , K = solve(S_gauss ,X_col);
+        ax = Axis(fig[1,i] , title=L"$\gamma=%$γ$ Condition %$(cond(K))", aspect=DataAspect())
+        sol , K_t = solution(X_test)
+        push!(errors , norm(Array(sol) - u.(eachcol(Array(X_test))) , Inf))
+        sol = reshape(Array(sol) , size(X_t,1) , :)
+        hm = heatmap!(ax , X,Y, sol , colorrange=limits)
+        return fig
+end;
 
-scatter!(ax,X_L |> Array, label="Data Points")
-scatter!(ax,X_D|> Array, label="Dirichlet Points")
-scatter!(ax,X_N |> Array, label="Neumann Points")
-arrows!(ax,X_N[1,:]|> Array , X_N[2,:] |> Array, N[1,:] |> Array, N[2,:] |> Array, lengthscale=0.1)
-axislegend(ax , position=:lt)
-save("images/collocation-points.png",fig );
+# Results
+# #+name: fig:gauss-kernel-diff
+
+ ; using GLMakie
+fig = Figure(size=(1800,400))
+limits = (-0.6, 0)
+for (i,gamma) in enumerate([Val(0.1) , Val(0.075) , Val(0.05) , Val(0.025)])
+plotsqdiff(fig , i,gamma , limits , rbf_gaussian , d_rbf_gaussian , dd_rbf_gaussian)
+end
+Colorbar(fig[:, end+1], hm)
+save("images/gauss-kernel-diff.png",fig );
+
+
+
+# #+caption: gauss kernel with various values for \(\gamma \) for a diffusive system
+# #+RESULTS: fig:gauss-kernel-diff
+# [[file:images/gauss-kernel-diff.png]]
+
+
+
+# #+name: fig:thin-plate-kernel-diff
+
+ ; fig = Figure(size=(1800,400))
+limits = (-0.6, 0)
+for (i,gamma) in enumerate([Val(0.1) , Val(0.075) , Val(0.05) , Val(0.025)])
+plotsqdiff(fig , i,gamma , limits , thin_plate , d_thin_plate , dd_thin_plate)
+end
+Colorbar(fig[:, end+1], hm)
+save("images/thin-plate-kernel-diff.png",fig );
+
+
+
+# #+caption: thin plate kernel with various values for \(\gamma \) for a diffusive system
+# #+RESULTS: fig:thin-plate-kernel-diff
+# [[file:images/thin-plate-kernel-diff.png]]
+
+# #+name: fig:B3-spline-kernel-diff
+
+ ; using GLMakie
+fig = Figure(size=(1800,400))
+limits = (-0.6, 0)
+for (i,gamma) in enumerate([Val(1.0) , Val(1.25) , Val(1.5) , Val(1.75)])
+plotsqdiff(fig , i,gamma , limits , B_3 , d_B_3 , dd_B_3)
+end
+Colorbar(fig[:, end+1], hm)
+save("images/B3-spline-kernel-diff.png",fig );

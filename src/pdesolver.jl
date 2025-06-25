@@ -10,9 +10,7 @@ using KernelAbstractions
 using LinearAlgebra;
 
 # Solver
-
-# #+RESULTS:
-
+# Our implementation Provides some structs for convenience. A ~PDESystem~ that stores the Data functions of a diffusion PDE together with the kernel and its derrivatives \(k , \nabla k , \Delta k\) and information about the Domain of the problem in form if its signed distance function and Its gradient (for normals at the boundary)
 
  ; struct PDESystem
     k :: Function
@@ -27,24 +25,37 @@ using LinearAlgebra;
     grad_sdf::Function
     sdf_beta::Function
 end
+;
 
-struct PDESolver
+
+# We provide a  ~PDESolver~ that stores The PDE system, Collocation points \(\hat{X}\) , and the solution vector \(\alpha \) in \(u_h = \sum_{j=0}^n \alpha_j k(x_j , \cdot )\)
+
+ ; struct PDESolver
     S::PDESystem
     X::AbstractMatrix
     α :: AbstractVector
 end
+;
 
-function (f::PDESolver)(X)
+
+# ~PDESolver~ Provides methods for evaluation itselve on a test dataset
+
+ ; function (f::PDESolver)(X)
     dev = get_backend(X)
     print("Backend" , dev)
     K = KernelAbstractions.zeros(dev , Float32, size(X,2)  , size(f.X ,2))
     print("Size of the system Matrix:" , size(K))
-    kernel_matrix! = dirichlet_matrix!( dev , 256 , size(K))
-    kernel_matrix!(K, X , f.X , f.S.k )
+    km! = kernel_matrix!( dev , 256 , size(K))
+    km!(K, X , f.X , f.S.k , f.S.sdf )
 return K * f.α , K
 end
+;
 
-function solve(S, X_col)
+
+
+# As well as a method to solve the approximation system and return a instance of ~PDESystem~
+
+ ; function solve(S, X_col)
     dev = get_backend(X_col)
     K = KernelAbstractions.zeros(dev , Float32 , size(X_col , 2) , size(X_col , 2) )
     sys_matrix! = system_matrix!( dev , 256 , size(K))
@@ -54,8 +65,9 @@ function solve(S, X_col)
     return (PDESolver(S,X_col ,α) , K)
     end
 
+;
 
-function get_boundary(
+ ; function get_boundary(
     S,
     X
     )
